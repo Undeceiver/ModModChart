@@ -23,6 +23,12 @@ export type BombEffect = Effect<remapper.Bomb>
 export type WallEffect = Effect<remapper.Wall>
 
 /*
-* Groups
+* Grouping
 */
-export type GroupDefinition<T,N,V> = ((name: N) => (t: T) => V)
+export type Grouper<T,V> = ((t:T) => V)
+export type StringGrouper<T> = Grouper<T,string>
+export type NumberGrouper<T> = Grouper<T,number>
+
+export type GroupEffect<T,V> = ((v:V) => Effect<T>)
+export type StringGroupEffect<T> = GroupEffect<T,string>
+export type NumberGroupEffect<T> = GroupEffect<T,number>

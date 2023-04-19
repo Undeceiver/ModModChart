@@ -1,92 +1,47 @@
-import { Effect, NoteEffect, BombEffect, WallEffect, GroupDefinition } from "./types.ts";
 import * as remapper from "https://deno.land/x/remapper@3.1.1/src/mod.ts";
+import { Effect, Grouper, StringGrouper, NumberGrouper, GroupEffect, StringGroupEffect, NumberGroupEffect, BSObject } from "./types.ts";
 import { parameterizeEffect } from "./effects.ts";
 
-export function customDataGroup<T extends remapper.Note | remapper.Bomb | remapper.Wall,V>(): GroupDefinition<T,string,V>
-{
-    return function(name: string)        
-    {
-        return function(t: T)
-        {
-            return t.customData[name] as V
-        }
-    }    
-}
-
-export function arrayGroup<T>() : GroupDefinition<T,T[],number>
-{
-    return function(array: T[])
-    {
-        return function(t: T)
-        {
-            for(let i = 0; i < array.length; i++)
-            {
-                if(array[i] === t)
-                {
-                    return i
-                }
-            }
-
-            return -1
-        }
-    }
-}
-
-export function groupEffect<T,N,V>(group: GroupDefinition<T,N,V>, effect: ((v: V) => Effect<T>), name: N): Effect<T>
+export function groupEffect<T,V>(grouper: Grouper<T,V>, effect: GroupEffect<T,V>): Effect<T>
 {
     return parameterizeEffect(
-        function(t: T): Effect<T>
+        function (t: T)
         {
-            const v: V = group(name)(t)
-
-            return effect(v)
-        }
-    )
+            return effect(grouper(t))
+        })
 }
 
-export function createGroups<T>(groupFn: (t:T) => string, ts: T[]): T[][]
+export function customDataGrouper<T extends BSObject, V>(groupName: string): Grouper<T,V>
 {
-    const groups : Record<string,T[]> = {}
-
-    for(const t of ts)
+    return function(t: T)
     {
-        const key: string = groupFn(t)
+        return t.customData[groupName] as V
+    }
+}
 
-        let group: T[] | undefined = groups[key]
+export function timeGrouper<T extends BSObject>(frequency = 1, offset = 0): NumberGrouper<T>
+{
+    return function(t: T)
+    {
+        return (t.time - offset) % frequency
+    }
+}
 
-        if(group === undefined)
+// dictGroupEffect TODO
+
+// We use an array of pairs instead of a dictionary because we use an epsilon for checking the time and this makes it easier to traverse the group definition.
+export function discreteTimeGroupEffect<T>(effects: [number,Effect<T>][], epsilon = 0.05): NumberGroupEffect<T>
+{
+    return function(time: number)
+    {
+        for(const deftime of effects)
         {
-            group = []
+            if(Math.abs(time-deftime[0]) < epsilon)
+            {
+                return deftime[1]
+            }
         }
 
-        group.push(t)
-
-        groups[key] = group
+        throw new Error("Could not identify the group of object with time: " + time)
     }
-
-    const result: T[][] = []
-
-    for(const key in groups)
-    {        
-        const group = groups[key]
-
-        result.push(group)
-    }
-
-    return result
-}
-
-export function createGroupsByBeat<T extends remapper.Note | remapper.Bomb | remapper.Wall>(groupFn: (beat:number) => string, ts: T[]): T[][]
-{
-    return createGroups(function(t: T) { return groupFn(t.time) }, ts)
-}
-
-export function createAdjacentGroups<T extends remapper.Note | remapper.Bomb | remapper.Wall>(groupStart: number, groupLength: number, ts: T[]): T[][]
-{
-    const groupFn = function(beat: number)
-    {
-        return (Math.floor(beat-groupStart)/groupLength).toString()
-    }
-
-    return createGroupsByBeat(groupFn, ts)
 }

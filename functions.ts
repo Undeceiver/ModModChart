@@ -54,7 +54,10 @@ export function applyEffect<T>(effect: Effect<T>, t: T)
 }
 
 // Wrapper for mapping an effect to an array
-export function mapEffect<T>(effect: Effect<T>, objects: T[])
+export function mapEffect<T>(effect: Effect<T>): Effect<T[]>
 {
-    objects.map(effect)
+    return function(objects: T[])
+    {
+        objects.map(effect)
+    }
 }

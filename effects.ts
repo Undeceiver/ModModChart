@@ -204,7 +204,6 @@ export function addScale<T extends remapper.Wall>(scale: remapper.Vec3): Effect<
         })
 }
 
-
 /*
 * Path animations
 */
