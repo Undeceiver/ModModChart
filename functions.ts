@@ -1,4 +1,4 @@
-import { NoteFilter, BombFilter, WallFilter, Filter, Effect } from "./types.ts";
+import { NoteFilter, BombFilter, WallFilter, Filter, Effect, Creator, CustomDataField, BSObject } from "./types.ts";
 import * as remapper from "https://deno.land/x/remapper@3.1.1/src/mod.ts";
 
 // These wrappers hardly do anything, so arguably they're unnecessary. Don't use them if you prefer to use ReMapper directly for this.
@@ -59,5 +59,58 @@ export function mapEffect<T>(effect: Effect<T>): Effect<T[]>
     return function(objects: T[])
     {
         objects.map(effect)
+    }
+}
+
+/*
+* Combining creation with effects
+*/
+export function createWithEffect<T>(creator: Creator<T>, effect: Effect<T[]>): Creator<T>
+{
+    return function(t: T)
+    {
+        const results: T[] =  creator(t)
+
+        effect(results)
+
+        return results
+    }
+}
+
+export function createWithIndividualEffect<T>(creator: Creator<T>, effect: Effect<T>): Creator<T>
+{
+    return createWithEffect(creator,mapEffect(effect))
+}
+
+export function mapCreate<T>(creator: Creator<T>): Creator<T[]>
+{
+    return function(objects: T[])
+    {
+        return objects.map(creator)
+    }
+}
+
+export function customDataField(field: string, subfield: CustomDataField | undefined = undefined)
+{
+    return {field: field, subfield: subfield}
+}
+
+function getCustomDataFieldInner<V>(customData: Record<string,unknown>, field: CustomDataField): V
+{
+    if(field.subfield === undefined)
+    {
+        return customData[field.field] as V
+    }
+    else
+    {
+        return getCustomDataFieldInner(customData[field.field] as Record<string,unknown>,field.subfield)
+    }
+}
+
+export function getCustomDataField<T extends BSObject,V>(field: CustomDataField): ((t: T) => V)
+{
+    return function(t: T): V
+    {
+        return getCustomDataFieldInner(t.customData,field)
     }
 }

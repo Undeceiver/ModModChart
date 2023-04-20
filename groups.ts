@@ -45,3 +45,12 @@ export function discreteTimeGroupEffect<T>(effects: [number,Effect<T>][], epsilo
         throw new Error("Could not identify the group of object with time: " + time)
     }
 }
+
+// Useful for some base cases and default values
+export function nothingGroupEffect<T,V>(): GroupEffect<T,V>
+{
+    return function(v: V)
+    {
+        return function(t: T) {}
+    }
+}

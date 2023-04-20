@@ -1,6 +1,8 @@
-import { Effect, NoteEffect, BombEffect, WallEffect, BSObject } from "./types.ts";
+import { Effect, NoteEffect, BombEffect, WallEffect, BSObject, CustomDataField } from "./types.ts";
 import * as remapper from "https://deno.land/x/remapper@3.1.1/src/mod.ts";
 import * as util from "./util.ts"
+import { mapEffect } from "./functions.ts";
+import { getCustomDataField } from "./functions.ts";
 
 /*
 * Combining effects
@@ -33,6 +35,14 @@ export function parameterizeEffectByField<T,K extends keyof T>(field: K, effect:
     return function(t: T)
     {
         effect(t[field])(t)
+    }
+}
+
+export function parameterizeEffectByCustomData<T extends BSObject,V>(field: CustomDataField, effect: (v: V) => Effect<T>): Effect<T>
+{
+    return function(t: T)
+    {
+        effect(getCustomDataField<T,V>(field)(t))
     }
 }
 
@@ -131,6 +141,27 @@ export function addHJD<T extends remapper.Note | remapper.Wall | remapper.Bomb>(
 {
     return addOffset(hjd)
 }
+
+export function setDuration(duration: number): Effect<remapper.Wall>
+{
+    return setValueEffect("duration",duration)
+}
+
+export function addDuration(duration: number): Effect<remapper.Wall>
+{
+    return addValueEffect("duration",duration)
+}
+
+export function setTime<T extends BSObject>(time: number): Effect<T>
+{
+    return setValueEffect("time",time)
+}
+
+export function addTime<T extends BSObject>(time: number): Effect<T>
+{
+    return addValueEffect("time",time)
+}
+
 
 export function setPosition<T extends remapper.Note | remapper.Wall | remapper.Bomb>(position: remapper.Vec2): Effect<T>
 {

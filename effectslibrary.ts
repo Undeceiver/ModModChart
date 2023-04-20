@@ -1,15 +1,49 @@
 import { Note } from "https://deno.land/x/remapper@3.1.1/src/note.ts";
-import { Effect, NoteEffect, BombEffect, WallEffect, BSObject, NoteOrBomb } from "./types.ts";
+import { Effect, NoteEffect, BombEffect, WallEffect, BSObject, NoteOrBomb, Creator, GroupEffect, NumberGroupEffect } from "./types.ts";
 import * as effects from "./effects.ts"
 import * as groups from "./groups.ts"
 import { fromVanillaToNEX, fromVanillaToNEY } from "./util.ts"
 import * as remapper from "https://deno.land/x/remapper@3.1.1/src/mod.ts";
+import { copyObject, parameterizeCreation, parameterizeCreationByField } from "./creation.ts";
 
 // This file is sorted alphabetically
 
 export function chonky<T extends NoteOrBomb>(scale = 1.25): Effect<T>
 {
     return effects.animateScale([[scale,scale,scale,0],[scale,scale,scale,1]])
+}
+
+// freq is measured in beats, and it lasts for as long as the original wall lasts
+// total is measured in lanes
+export function increasingWall(dir: number, freq = 0.1, total = 0.5): Creator<remapper.Wall>
+{    
+    //console.log("Creating increasing wall with dir:" + dir)        
+
+    return parameterizeCreation(
+        function(wall: remapper.Wall): Creator<remapper.Wall>
+        {
+            const n = wall.duration/freq
+
+            const reduceDur: Effect<remapper.Wall> = effects.setDuration(freq)
+
+            reduceDur(wall)
+
+            const groupEffect: NumberGroupEffect<remapper.Wall> = function(v: number)
+            {
+                const i = v+1
+                const initpos = effects.initializePosition()
+                const peri = total*i
+                const displace: Effect<remapper.Wall> = effects.addPosition([dir*peri/n,0])
+                const displaceTime: Effect<remapper.Wall> = effects.addTime(i*freq)
+                const reduceDur: Effect<remapper.Wall> = effects.setDuration(freq)
+
+                return effects.combineEffects([initpos,displace,reduceDur,displaceTime])
+            }
+
+            //console.log("Creating increasing wall with duration: " + duration +  " and n: " + n)
+            
+            return copyObject(n,groupEffect)
+        })
 }
 
 export function interpolateHJD<T extends BSObject>(startTime: number, startValue: number, endTime: number, endValue: number): Effect<T>
@@ -61,10 +95,10 @@ export function popObject<T extends remapper.Note | remapper.Bomb>(): Effect<T>
 }
 
 // Must have initialized position and scale
-export function pushIn<T extends BSObject>(groupName: string, direction: number, hjdIncrease = 1, pushFactor = 0.06, slideDist = 8, slideEnd = 0.2): Effect<T>
+export function pushIn<T extends BSObject>(groupName: string, direction: number, hjdIncrease = 1, slideDist = 8, slideEnd = 0.2): Effect<T>
 {
     const hjdEf = effects.addHJD(hjdIncrease)
-    const positionFn = function(push: number): Effect<BSObject> { return effects.addPosition([direction*pushFactor*push,0] as remapper.Vec2)}
+    const positionFn = function(push: number): Effect<BSObject> { return effects.addPosition([direction*push,0] as remapper.Vec2)}
     const positionEf = groups.groupEffect(groups.customDataGrouper(groupName),positionFn)
     //const widthFn = function(push: number): Effect<remapper.Wall> { return effects.addScale([pushFactor*push,0,0] as remapper.Vec3)}
     //const widthEf = groups.groupEffect(groups.customDataGroup(),widthFn,groupName)
@@ -89,45 +123,43 @@ export function pushIn<T extends BSObject>(groupName: string, direction: number,
 // "Queueing" notes.
 // Put at a distance, then move in.
 // steps includes the final step being when the player can hit it
-export function queueObject<T extends remapper.Note | remapper.Bomb>(stepDistance: number, steps: number): Effect<T>
+// stepTime is a proportion of the stepDuration, and it indicates the time the notes do not move
+export function queueObject<T extends remapper.Note | remapper.Bomb>(stepDistance = 6, stayTime = 0.3, steps = 2, jumpTime = 0.3): Effect<T>
 {
-    const playDist = 2
+    const playDist = 1
     const gone = -10
-    const stepDuration = 0.55/steps
+    const stepDuration = jumpTime/(steps-1+stayTime)
 
-    return effects.parameterizeEffect(function(t: T)
+    const swing = [0,0,playDist,0.5]
+    const end = [0,0,playDist-stepDistance,0.5+stepDuration]
+    const postend = [0,0,playDist+gone,1]
+
+    const stepArray = []
+    for(let i = 0; i < steps; i++)
     {
-        const y = t.y
+        const stepStart = [0,0,playDist+stepDistance*(steps-i),0.01+stepDuration*i]
+        const stepEnd = [0,0,playDist+stepDistance*(steps-i),0.01+stepDuration*(i+stayTime)]
 
-        const end = [0,y,playDist-stepDistance,0.56]
-        const postend = [0,y,playDist+gone,1]
+        stepArray.push(stepStart)
+        stepArray.push(stepEnd)
+    }
+    stepArray.push(swing)
+    stepArray.push(end)
+    stepArray.push(postend)
+    const definitePosition: remapper.KeyframesVec3 = stepArray as remapper.KeyframesVec3
 
-        const stepArray = []
-        for(let i = 1; i <= steps; i++)
-        {
-            const stepStart = [0,y,playDist+stepDistance*(steps-i),0.01+stepDuration*(i-1)]
-            const stepEnd = [0,y,playDist+stepDistance*(steps-i),0.01+stepDuration*i-0.02]
+    //const dissolve: remapper.KeyframesLinear = [[0,0],[0,0.01],[1,0.0101]]
+    //const dissolveArrow: remapper.KeyframesLinear = [[0,0],[0,0.01],[1,0.0101]]
 
-            stepArray.push(stepStart)
-            stepArray.push(stepEnd)
-        }
-        stepArray.push(end)
-        stepArray.push(postend)
-        const definitePosition: remapper.KeyframesVec3 = stepArray as remapper.KeyframesVec3
+    const posAnimation: Effect<T> = effects.animateDefinitePosition(definitePosition)
+    //const dissolveAnimation: Effect<T> = effects.animateDissolve(dissolve)
+    //const dissolveArrowAnimation: Effect<T> = effects.animateDissolveArrow(dissolveArrow)
 
-        const dissolve: remapper.KeyframesLinear = [[0,0],[0,0.01],[1,0.0101]]
-        const dissolveArrow: remapper.KeyframesLinear = [[0,0],[0,0.01],[1,0.0101]]
+    //const disableGravity: Effect<T> = effects.disableNoteGravity() // THIS CAUSES BUGS
+    //const disableSpawnEffect: Effect<T> = effects.disableSpawnEffect()
+    //const disableNoteLook: Effect<T> = effects.disableNoteLook()
 
-        const posAnimation: Effect<T> = effects.animateDefinitePosition(definitePosition)
-        const dissolveAnimation: Effect<T> = effects.animateDissolve(dissolve)
-        const dissolveArrowAnimation: Effect<T> = effects.animateDissolveArrow(dissolveArrow)
-
-        const disableGravity: Effect<T> = effects.disableNoteGravity()
-        const disableSpawnEffect: Effect<T> = effects.disableSpawnEffect()
-        const disableNoteLook: Effect<T> = effects.disableNoteLook()
-
-        return effects.combineEffects([posAnimation,dissolveAnimation,dissolveArrowAnimation,disableGravity,disableSpawnEffect,disableNoteLook])    
-    })
+    return effects.combineEffects([posAnimation])        
 }
 
 // end is a proportion of the spawn animation

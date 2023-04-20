@@ -4,6 +4,12 @@ import * as remapper from "https://deno.land/x/remapper@3.1.1/src/mod.ts"; // MA
 export type BSObject = remapper.Note | remapper.Bomb | remapper.Wall
 export type NoteOrBomb = remapper.Note | remapper.Bomb
 
+export type CustomDataField =
+{
+    field: string,
+    subfield: CustomDataField | undefined
+}
+
 /*
 * Filter types
 */
@@ -32,3 +38,10 @@ export type NumberGrouper<T> = Grouper<T,number>
 export type GroupEffect<T,V> = ((v:V) => Effect<T>)
 export type StringGroupEffect<T> = GroupEffect<T,string>
 export type NumberGroupEffect<T> = GroupEffect<T,number>
+
+/*
+* Creating new objects
+*/
+
+// A creator always start from an original object. For simplicity, we assume the resulting objects created are of the same type.
+export type Creator<T> = ((t:T) => T[])
