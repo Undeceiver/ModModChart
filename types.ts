@@ -45,3 +45,9 @@ export type NumberGroupEffect<T> = GroupEffect<T,number>
 
 // A creator always start from an original object. For simplicity, we assume the resulting objects created are of the same type.
 export type Creator<T> = ((t:T) => T[])
+
+/*
+* Track animations
+*/
+export type TrackAnimation = ((time: number) => Effect<remapper.TrackValue>)
+export type TrackAnimationDefinition = ((duration: number, event:remapper.AnimationInternals.AbstractAnimation) => void)

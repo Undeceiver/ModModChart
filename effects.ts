@@ -1,4 +1,4 @@
-import { Effect, NoteEffect, BombEffect, WallEffect, BSObject, CustomDataField } from "./types.ts";
+import { Effect, NoteEffect, BombEffect, WallEffect, BSObject, CustomDataField, TrackAnimation, TrackAnimationDefinition } from "./types.ts";
 import * as remapper from "https://deno.land/x/remapper@3.1.1/src/mod.ts";
 import * as util from "./util.ts"
 import { mapEffect } from "./functions.ts";
@@ -42,7 +42,7 @@ export function parameterizeEffectByCustomData<T extends BSObject,V>(field: Cust
 {
     return function(t: T)
     {
-        effect(getCustomDataField<T,V>(field)(t))
+        effect(getCustomDataField<T,V>(field)(t))(t)
     }
 }
 
@@ -81,6 +81,14 @@ export function disableSpawnEffect<T extends remapper.Note | remapper.Bomb>(): E
 export function disableNoteLook<T extends remapper.Note | remapper.Bomb>(): Effect<T>
 {
     return disableValue("noteLook")
+}
+
+export function disableBadCutSaberType<T extends remapper.Note>(): Effect<T>
+{
+    return function(note: remapper.Note)
+    {
+        note.customData["disableBadCutSaberType"] = true
+    }
 }
 
 /*
@@ -275,5 +283,59 @@ export function animateScale<T extends BSObject>(scale: remapper.KeyframesVec3):
     return function(obj: BSObject)
     {
         obj.animate.scale = scale
+    }
+}
+
+/*
+* Track animations
+*/
+export function addTrack<T extends BSObject>(track: remapper.TrackValue): Effect<T>
+{
+    return function(t: T)
+    {
+        t.track.add(track)
+    }
+}
+
+// This should only be used in some cases, not in general
+export function trackAnimationEffect<T extends BSObject>(animation: TrackAnimation, track: remapper.TrackValue, timeVariation = 0): Effect<T>
+{
+    return function(t:T)
+    {
+        addTrack(track)(t)
+
+        animation(t.time+timeVariation)(track)
+    }
+}
+
+export function animateTrack(duration: number, animation: TrackAnimationDefinition): TrackAnimation
+{
+    return function(time: number)
+    {
+        return function(track: remapper.TrackValue)
+        {
+            const event = new remapper.CustomEvent(time).animateTrack(track, duration)            
+            
+            animation(duration,event.animate)
+
+            event.push()
+        }
+    }
+}
+
+// Use the keyframes with absolute times, it gets translated to proportions
+export function animatePositionTrack(position: remapper.KeyframesVec3): TrackAnimationDefinition
+{
+    return function(duration, event)
+    {
+        event.offsetPosition = util.beatsToTrackAnimationPVec3(duration)(position)
+    }
+}
+
+export function animateScaleTrack(scale: remapper.KeyframesVec3): TrackAnimationDefinition
+{
+    return function(duration, event)
+    {
+        event.scale = util.beatsToTrackAnimationPVec3(duration)(scale)
     }
 }

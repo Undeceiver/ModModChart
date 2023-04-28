@@ -2,7 +2,7 @@ import * as remapper from "https://deno.land/x/remapper@3.1.1/src/mod.ts";
 import { Effect, Creator, GroupEffect, NumberGroupEffect, BSObject, CustomDataField } from "./types.ts";
 import { LightRemapper } from "https://deno.land/x/remapper@3.1.1/src/light_remapper.ts";
 import { nothingGroupEffect } from "./groups.ts";
-import { getCustomDataField } from "./functions.ts";
+import { createWithEffect, createWithIndividualEffect, getCustomDataField } from "./functions.ts";
 
 export function parameterizeCreation<T>(creator: ((t:T) => Creator<T>)): Creator<T>
 {
@@ -28,7 +28,7 @@ export function parameterizeCreationByCustomData<T extends BSObject,V>(field: Cu
     }
 }
 
-export function createWalls(copies = 1, fn: NumberGroupEffect<remapper.Wall> = nothingGroupEffect ): Creator<remapper.Wall>
+export function createWalls(copies = 1, fn: NumberGroupEffect<remapper.Wall> = nothingGroupEffect, fake = false ): Creator<remapper.Wall>
 {
     return function(owall: remapper.Wall)
     {
@@ -37,14 +37,14 @@ export function createWalls(copies = 1, fn: NumberGroupEffect<remapper.Wall> = n
         {
             const wall = new remapper.Wall()
             fn(i)(wall)
-            wall.push()
+            wall.push(fake,false)
             result.push(wall)
         }
         return result
     }
 }
 
-export function createNotes(copies = 1, fn: NumberGroupEffect<remapper.Note> = nothingGroupEffect): Creator<remapper.Note>
+export function createNotes(copies = 1, fn: NumberGroupEffect<remapper.Note> = nothingGroupEffect, fake = false): Creator<remapper.Note>
 {
     return function(onote: remapper.Note)
     {
@@ -53,14 +53,14 @@ export function createNotes(copies = 1, fn: NumberGroupEffect<remapper.Note> = n
         {
             const note = new remapper.Note()
             fn(i)(note)
-            note.push()
+            note.push(fake,false)
             result.push(note)
         }
         return result
     }
 }
 
-export function createBombs(copies = 1, fn: NumberGroupEffect<remapper.Bomb> = nothingGroupEffect): Creator<remapper.Bomb>
+export function createBombs(copies = 1, fn: NumberGroupEffect<remapper.Bomb> = nothingGroupEffect, fake = false): Creator<remapper.Bomb>
 {
     return function(onote: remapper.Bomb)
     {
@@ -69,7 +69,7 @@ export function createBombs(copies = 1, fn: NumberGroupEffect<remapper.Bomb> = n
         {
             const bomb = new remapper.Bomb()
             fn(i)(bomb)
-            bomb.push()
+            bomb.push(fake,false)
             result.push(bomb)
         }
         return result
@@ -77,7 +77,7 @@ export function createBombs(copies = 1, fn: NumberGroupEffect<remapper.Bomb> = n
 }
 
 
-export function copyObject<T extends BSObject>(copies = 1, fn: NumberGroupEffect<T> = nothingGroupEffect): Creator<T>
+export function copyObject<T extends BSObject>(copies = 1, fn: NumberGroupEffect<T> = nothingGroupEffect, fake = false): Creator<T>
 {
     return function(t:T)
     {
@@ -86,9 +86,14 @@ export function copyObject<T extends BSObject>(copies = 1, fn: NumberGroupEffect
         {
             const obj = remapper.copy(t)
             fn(i)(obj)
-            obj.push()
+            obj.push(fake,false)
             result.push(obj)
         }
         return result
     }
+}
+
+export function effectOnFake<T extends BSObject>(effect: Effect<T>): Creator<T>
+{
+    return createWithIndividualEffect(copyObject<T>(1,nothingGroupEffect,true),effect)
 }

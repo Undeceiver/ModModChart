@@ -43,6 +43,22 @@ export function selectWalls(filter: WallFilter): remapper.Wall[]
     return selectAllWalls().filter(filter)
 }
 
+// A more general version of this with more than two options would make sense too.
+export function filterEffect<T>(filter: Filter<T>, trueEffect: Effect<T>, falseEffect: Effect<T>): Effect<T>
+{
+    return function(t: T)
+    {
+        if(filter(t))
+        {
+            trueEffect(t)
+        }
+        else
+        {
+            falseEffect(t)
+        }
+    }
+}
+
 /*
 * Applying effects
 */

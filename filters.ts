@@ -62,3 +62,11 @@ export function beatFilter<T extends remapper.Note | remapper.Bomb | remapper.Wa
         return (t.time >= start) && (t.time < end)
     }
 }
+
+export function noteTypeFilter(type: remapper.NOTETYPE): Filter<remapper.Note>
+{
+    return function(t: remapper.Note)
+    {
+        return t.type == type
+    }
+}
