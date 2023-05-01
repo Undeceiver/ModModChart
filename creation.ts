@@ -85,6 +85,7 @@ export function copyObject<T extends BSObject>(copies = 1, fn: NumberGroupEffect
         for(let i = 0; i < copies; i++)
         {
             const obj = remapper.copy(t)
+            obj.animate = new remapper.Animation().noteAnimation(obj.animation);
             fn(i)(obj)
             obj.push(fake,false)
             result.push(obj)
