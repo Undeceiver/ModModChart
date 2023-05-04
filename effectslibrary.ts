@@ -16,6 +16,32 @@ export function chonky<T extends NoteOrBomb>(scale = 1.25): Effect<T>
     return effects.animateScale([[scale,scale,scale,0],[scale,scale,scale,1]])
 }
 
+// Position must have been initialized
+// width is on either side
+export function closingWall(startTime: number, startWidth: number, endTime: number, endWidth: number, wallWidth = 0.5): Effect<remapper.Wall>
+{
+    return interpolateEffect(startTime, startWidth, endTime, endWidth, 
+        function(width: number)
+        {
+            return effects.parameterizeEffect(
+                function(wall: remapper.Wall)
+                {
+                    const width_ef = effects.setScale([wallWidth,wall.height,wall.duration*wall.NJS])
+                    let pos_ef
+                    if(wall.x < 0)
+                    {
+                        pos_ef = effects.setPosition([-width,wall.y])
+                    }
+                    else
+                    {
+                        pos_ef = effects.setPosition([width-wallWidth,wall.y])
+                    }
+
+                    return effects.combineEffects([pos_ef,width_ef])
+                })
+        })        
+}
+
 // Must initialize position before
 export function easyDodge(move = 0.25): Effect<remapper.Wall>
 {
@@ -101,6 +127,18 @@ export function interpolateHJD<T extends BSObject>(startTime: number, startValue
 export function interpolateNJS<T extends BSObject>(startTime: number, startValue: number, endTime: number, endValue: number): Effect<T>
 {
     return interpolateValue("NJS",startTime,startValue,endTime,endValue)
+}
+
+export function interpolateEffect<T extends BSObject>(startTime: number, startValue: number, endTime: number, endValue: number, effect: GroupEffect<T,number>): Effect<T>
+{
+    return effects.parameterizeEffectByField("time",
+        function(time: number)
+        {
+            const value = startValue + (endValue - startValue)*(time-startTime)/(endTime - startTime)
+
+            return effect(value)
+        }
+    )
 }
 
 // Smooths a value between a start value and an end value over a certain time range
