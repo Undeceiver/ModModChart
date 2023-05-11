@@ -1,4 +1,4 @@
-import { Filter } from "./types.ts";
+import { BSObject, Filter } from "./types.ts";
 import * as remapper from "https://deno.land/x/remapper@3.1.1/src/mod.ts";
 
 /*
@@ -22,7 +22,7 @@ export function andFilter<T>(filters: Filter<T>[])
 export function orFilter<T>(filters: Filter<T>[])
 {
     return function(t: T) {
-        let result = true
+        let result = false
 
         for(const filter of filters)
         {
@@ -55,11 +55,25 @@ export function groupFilter<T extends remapper.Note | remapper.Bomb | remapper.W
 }
 
 // inclusive start, exclusive end
-export function beatFilter<T extends remapper.Note | remapper.Bomb | remapper.Wall>(start: number, end: number): Filter<T>
+export function beatFilter<T extends remapper.Note | remapper.Bomb | remapper.Wall>(start: number, end: number, startInclusive = true, endInclusive = false): Filter<T>
 {
     return function(t: T)
     {
-        return (t.time >= start) && (t.time < end)
+        return ((t.time > start) || (startInclusive && t.time == start)) && ((t.time < end) || (endInclusive && t.time ==  end))
+    }
+}
+
+export function beatModuloFilter<T extends BSObject>(quotient: number, minModulo: number, maxModulo: number, offset = 0)
+{
+    return function(t: T)
+    {
+        const modulo = (t.time - offset + 10000*quotient) % quotient
+        if(modulo < 0)
+        {
+            console.log("NEGATIVE MODULO!!: " + modulo + " = " + t.time + " - " + offset + " % " + quotient)
+        }
+
+        return (modulo >= minModulo) && (modulo <= maxModulo)
     }
 }
 

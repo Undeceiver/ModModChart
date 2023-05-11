@@ -39,6 +39,9 @@ export type GroupEffect<T,V> = ((v:V) => Effect<T>)
 export type StringGroupEffect<T> = GroupEffect<T,string>
 export type NumberGroupEffect<T> = GroupEffect<T,number>
 
+export type InterpolatedEffect<T> = ((startTime: number, endTime:number) => NumberGroupEffect<T>)
+
+
 /*
 * Creating new objects
 */

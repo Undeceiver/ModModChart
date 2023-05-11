@@ -286,6 +286,14 @@ export function animateScale<T extends BSObject>(scale: remapper.KeyframesVec3):
     }
 }
 
+export function animateWorldRotation<T extends BSObject>(rotation: remapper.KeyframesVec3): Effect<T>
+{
+    return function(obj: BSObject)
+    {
+        obj.animate.rotation = rotation
+    }
+}
+
 /*
 * Track animations
 */
@@ -337,5 +345,13 @@ export function animateScaleTrack(scale: remapper.KeyframesVec3): TrackAnimation
     return function(duration, event)
     {
         event.scale = util.beatsToTrackAnimationPVec3(duration)(scale)
+    }
+}
+
+export function animateWorldRotationTrack(worldRotation: remapper.KeyframesVec3): TrackAnimationDefinition
+{
+    return function(duration, event)
+    {
+        event.rotation = util.beatsToTrackAnimationPVec3(duration)(worldRotation)
     }
 }

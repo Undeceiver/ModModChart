@@ -78,6 +78,11 @@ export function mapEffect<T>(effect: Effect<T>): Effect<T[]>
     }
 }
 
+export function runVoidEffect(effect: Effect<void>): void
+{
+    effect()
+}
+
 /*
 * Combining creation with effects
 */

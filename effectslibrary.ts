@@ -1,15 +1,49 @@
 import { Note } from "https://deno.land/x/remapper@3.1.1/src/note.ts";
-import { Effect, NoteEffect, BombEffect, WallEffect, BSObject, NoteOrBomb, Creator, GroupEffect, NumberGroupEffect } from "./types.ts";
+import { Effect, NoteEffect, BombEffect, WallEffect, BSObject, NoteOrBomb, Creator, GroupEffect, NumberGroupEffect, TrackAnimationDefinition, InterpolatedEffect } from "./types.ts";
 import * as effects from "./effects.ts"
 import * as groups from "./groups.ts"
 import { fromVanillaToNEX, fromVanillaToNEY, randomTrackName } from "./util.ts"
 import * as remapper from "https://deno.land/x/remapper@3.1.1/src/mod.ts";
-import { copyObject, effectOnFake, parameterizeCreation, parameterizeCreationByField } from "./creation.ts";
-import { customDataField, filterEffect } from "./functions.ts";
+import { copyObject, createBombs, createWalls, effectOnFake, parameterizeCreation, parameterizeCreationByField } from "./creation.ts";
+import { customDataField, filterEffect, runVoidEffect } from "./functions.ts";
 import { noteTypeFilter } from "./filters.ts";
 import { HemisphereLight } from "https://cdn.skypack.dev/three?dts";
 
 // This file is sorted alphabetically
+
+export function assignPlayerToTrack(track: remapper.TrackValue): Effect<void>
+{
+    return function()
+    {
+        new remapper.CustomEvent().assignPlayerToTrack("player").push();
+    }
+}
+
+// direction horizontally mirrors the spiral
+export function bombSpiral(startTime: number, endTime: number, startAngle: number, period: number, direction: number, bombDist = 0.125, xradius = 2, yradius = 1.5, xoffset = 0, yoffset = 1.25, fake = false): Creator<remapper.Bomb>
+{
+    const copies = (endTime - startTime)/bombDist
+
+    const groupEffect =
+        function(i: number)
+        {
+            const moduloTime = i*bombDist
+
+            const angle = startAngle + 2*Math.PI*moduloTime/period
+
+            const x = xoffset + direction*xradius*Math.cos(angle)
+            const y = yoffset + yradius*Math.sin(angle)
+
+            const initPos = effects.initializePosition()
+            const setPos = effects.setPosition([x,y])
+            const setTime = effects.setTime(startTime+moduloTime)
+            const nogravity = effects.disableNoteGravity()
+
+            return effects.combineEffects([initPos,setPos,setTime,nogravity])
+        }
+    
+        return createBombs(copies, groupEffect, fake)
+}
 
 export function chonky<T extends NoteOrBomb>(scale = 1.25): Effect<T>
 {
@@ -40,6 +74,13 @@ export function closingWall(startTime: number, startWidth: number, endTime: numb
                     return effects.combineEffects([pos_ef,width_ef])
                 })
         })        
+}
+
+export function curveIn<T extends BSObject>(startYaw: number, finalYaw = 0, finalTime = 0.5): Effect<T>
+{
+    const worldRotation: remapper.KeyframesVec3 = [[0,startYaw,0,0],[0,finalYaw,0,finalTime,"easeInExpo"]]
+
+    return effects.animateWorldRotation(worldRotation)
 }
 
 // Must initialize position before
@@ -112,6 +153,19 @@ export function increasingWall(dir: number, freq = 0.1, total = 0.25): Creator<r
         })
 }
 
+export function initializePlayerRotation(worldRotation: remapper.KeyframesVec3, duration = 2): void
+{
+    const rotationDefinition = effects.animateWorldRotationTrack(worldRotation)
+    const rotationAnimation = effects.animateTrack(duration,rotationDefinition)
+
+    rotationAnimation(0)(playerTrack())    
+}
+
+export function initializePlayerTrack(): void
+{
+    runVoidEffect(assignPlayerToTrack(playerTrack()))
+}
+
 export function interpolateHJD<T extends BSObject>(startTime: number, startValue: number, endTime: number, endValue: number): Effect<T>
 {
     return effects.parameterizeEffect(
@@ -135,10 +189,17 @@ export function interpolateEffect<T extends BSObject>(startTime: number, startVa
         function(time: number)
         {
             const value = startValue + (endValue - startValue)*(time-startTime)/(endTime - startTime)
-
+            
             return effect(value)
         }
     )
+}
+
+export function interpolateEffectByArgument<T extends BSObject>(startInput: number, startValue: number, endInput: number, endValue: number, input: number, effect: GroupEffect<T,number>): Effect<T>
+{
+    const value = startValue + (endValue - startValue)*(input-startInput)/(endInput - startInput)
+    
+    return effect(value)
 }
 
 // Smooths a value between a start value and an end value over a certain time range
@@ -177,6 +238,74 @@ export function openOrClose(startTime: number, endTime: number, startWidth = 0, 
 
             return filterEffect(noteTypeFilter(remapper.NOTETYPE.RED),leftEffect,rightEffect)
         })
+}
+
+// finalTime is a proportion of the spawn animation
+export function oscillateCurveIn<T extends BSObject>(startTime: number, period: number, amplitude: number, finalYaw = 0, finalTime = 0.5): Effect<T>
+{
+    const groupEffect = 
+        function(angle: number)
+        {
+            return curveIn(angle,finalYaw,finalTime)
+        }
+
+    return oscillateEffect(startTime,period,amplitude,groupEffect)
+}
+
+// Starts on the negative extreme
+// period is measured in beats
+export function oscillateEffect<T extends BSObject>(startTime: number, period: number, amplitude: number, effect: GroupEffect<T,number>): Effect<T>
+{
+    return effects.parameterizeEffectByField("time",
+        function(time: number)
+        {
+            const value = -amplitude*Math.cos((time-startTime)*2*Math.PI/period)
+
+            return effect(value)
+        }
+    )
+}
+
+export function oscillateEffectByArgument<T extends BSObject>(startInput: number, period: number, amplitude: number, input:number, effect: GroupEffect<T,number>): Effect<T>
+{
+    const value = -amplitude*Math.cos((input-startInput)*2*Math.PI/period)
+    
+    return effect(value)
+}
+
+export function oscillateYaw(startTime: number, endTime: number, period: number, amplitude: number): void
+{
+    const keyframes: remapper.KeyframesVec3 = [[0,-amplitude,0,0],[0,0,0,0.25,"easeInSine"],[0,amplitude,0,0.5,"easeOutSine"],[0,0,0,0.75,"easeInSine"],[0,-amplitude,0,1,"easeOutSine"]]    
+
+    const def:TrackAnimationDefinition = 
+        function(duration, event)
+        {
+            event.rotation = keyframes
+        }
+
+    const worldRotationEffect = effects.animateTrack(period,def)
+
+    for(let time = startTime; time < endTime; time += period)
+    {
+        worldRotationEffect(time)(playerTrack())
+    }
+}
+
+export function periodicEffect<T extends BSObject>(startTime: number, period: number, effect: InterpolatedEffect<T>): Effect<T>
+{
+    return effects.parameterizeEffectByField("time",
+        function(time: number)
+        {
+            const moduloTime = (time - startTime + period*10000) % period
+            
+            return effect(0, period)(moduloTime)
+        }
+    )
+}
+
+export function playerTrack(): remapper.TrackValue
+{
+    return "player"
 }
 
 // Making notes "pop" then start moving
@@ -302,6 +431,34 @@ export function surge(stump = 0.4, duration = 0.75): Effect<remapper.Wall>
     }
 
     return effects.parameterizeEffectByCustomData(customDataField("surge"),parametricEffect)
+}
+
+// direction basically horizontally mirrors the spiral
+export function wallSpiral(startTime: number, endTime: number, startAngle: number, period: number, direction: number, wallDist = 0.125, xradius = 2, yradius = 1.5, xoffset = 0, yoffset = 1.25, wallside = 0.5, fake = false): Creator<remapper.Wall>
+{
+    const copies = (endTime - startTime)/wallDist
+
+    const groupEffect =
+        function(i: number)
+        {
+            const moduloTime = i*wallDist
+
+            const angle = startAngle + 2*Math.PI*moduloTime/period
+
+            const x = xoffset - wallside/2 + direction*xradius*Math.cos(angle)
+            const y = yoffset - wallside/2 + yradius*Math.sin(angle)
+
+            const initPos = effects.initializePosition()
+            const setPos = effects.setPosition([x,y])
+            const setTime = effects.setTime(startTime+moduloTime)
+            const setDuration = effects.setDuration(wallDist)
+            const initScale = effects.initializeScale()
+            const setScale = effects.setScale([wallside,wallside,wallside])
+            
+            return effects.combineEffects([initPos,setPos,setTime,setDuration,initScale,setScale])
+        }
+    
+        return createWalls(copies, groupEffect, fake)
 }
 
 // slowTime is a proportion as in animations, so 0 means spawn time, 0.5 means the time the player has to hit the note.
