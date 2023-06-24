@@ -1,13 +1,15 @@
 import { Note } from "https://deno.land/x/remapper@3.1.1/src/note.ts";
-import { Effect, NoteEffect, BombEffect, WallEffect, BSObject, NoteOrBomb, Creator, GroupEffect, NumberGroupEffect, TrackAnimationDefinition, InterpolatedEffect } from "./types.ts";
+import { Effect, NoteEffect, BombEffect, WallEffect, BSObject, NoteOrBomb, Creator, GroupEffect, NumberGroupEffect, TrackAnimationDefinition, InterpolatedEffect, TimePointPattern, PointTimeSamples, TimeSampler } from "./types.ts";
 import * as effects from "./effects.ts"
 import * as groups from "./groups.ts"
+import * as geometry from "./geometricpatterns.ts"
 import { fromVanillaToNEX, fromVanillaToNEY, randomTrackName } from "./util.ts"
 import * as remapper from "https://deno.land/x/remapper@3.1.1/src/mod.ts";
 import { copyObject, createBombs, createWalls, effectOnFake, parameterizeCreation, parameterizeCreationByField } from "./creation.ts";
 import { customDataField, filterEffect, runVoidEffect } from "./functions.ts";
 import { noteTypeFilter } from "./filters.ts";
 import { HemisphereLight } from "https://cdn.skypack.dev/three?dts";
+import { timeSampler } from "./geometricpatterns.ts";
 
 // This file is sorted alphabetically
 
@@ -20,29 +22,28 @@ export function assignPlayerToTrack(track: remapper.TrackValue): Effect<void>
 }
 
 // direction horizontally mirrors the spiral
-export function bombSpiral(startTime: number, endTime: number, startAngle: number, period: number, direction: number, bombDist = 0.125, xradius = 2, yradius = 1.5, xoffset = 0, yoffset = 1.25, fake = false): Creator<remapper.Bomb>
+export function bombSpiral(startTime: number, endTime: number, startAngle: number, period: number, direction: number, bombDist = 0.125, xradius = 2, yradius = 1.5, xoffset = 0, yoffset = 1.25): PointTimeSamples
 {
-    const copies = (endTime - startTime)/bombDist
+    const pattern : TimePointPattern = function(time: number)
+    {
+        const moduloTime = time - startTime
+        const angle = startAngle + 2*Math.PI*moduloTime/period
+        const x = xoffset + direction*xradius*Math.cos(angle)
+        const y = yoffset + yradius*Math.sin(angle)
 
-    const groupEffect =
-        function(i: number)
-        {
-            const moduloTime = i*bombDist
+        return [x,y]
+    }
 
-            const angle = startAngle + 2*Math.PI*moduloTime/period
+    const sampler : TimeSampler = geometry.timeSampler(startTime, bombDist)
 
-            const x = xoffset + direction*xradius*Math.cos(angle)
-            const y = yoffset + yradius*Math.sin(angle)
+    return geometry.sampleTime(pattern,sampler,startTime,endTime)
+}
 
-            const initPos = effects.initializePosition()
-            const setPos = effects.setPosition([x,y])
-            const setTime = effects.setTime(startTime+moduloTime)
-            const nogravity = effects.disableNoteGravity()
+export function bombSpiralPlace(startTime: number, endTime: number, startAngle: number, period: number, direction: number, bombDist = 0.125, xradius = 2, yradius = 1.5, xoffset = 0, yoffset = 1.25, fake = false): Creator<remapper.Bomb>
+{
+    const samples = bombSpiral(startTime,endTime,startAngle,period,direction,bombDist,xradius,yradius,xoffset,yoffset)
 
-            return effects.combineEffects([initPos,setPos,setTime,nogravity])
-        }
-    
-        return createBombs(copies, groupEffect, fake)
+    return geometry.placeBombs(samples)
 }
 
 export function chonky<T extends NoteOrBomb>(scale = 1.25): Effect<T>
@@ -434,31 +435,28 @@ export function surge(stump = 0.4, duration = 0.75): Effect<remapper.Wall>
 }
 
 // direction basically horizontally mirrors the spiral
-export function wallSpiral(startTime: number, endTime: number, startAngle: number, period: number, direction: number, wallDist = 0.125, xradius = 2, yradius = 1.5, xoffset = 0, yoffset = 1.25, wallside = 0.5, fake = false): Creator<remapper.Wall>
+export function wallSpiral(startTime: number, endTime: number, startAngle: number, period: number, direction: number, wallDist = 0.125, xradius = 2, yradius = 1.5, xoffset = 0, yoffset = 1.25): PointTimeSamples
 {
-    const copies = (endTime - startTime)/wallDist
+    const pattern : TimePointPattern = function(time: number)
+    {
+        const moduloTime = time - startTime
+        const angle = startAngle + 2*Math.PI*moduloTime/period
+        const x = xoffset + direction*xradius*Math.cos(angle)
+        const y = yoffset + yradius*Math.sin(angle)
 
-    const groupEffect =
-        function(i: number)
-        {
-            const moduloTime = i*wallDist
+        return [x,y]
+    }
 
-            const angle = startAngle + 2*Math.PI*moduloTime/period
+    const sampler : TimeSampler = geometry.timeSampler(startTime, wallDist)
 
-            const x = xoffset - wallside/2 + direction*xradius*Math.cos(angle)
-            const y = yoffset - wallside/2 + yradius*Math.sin(angle)
+    return geometry.sampleTime(pattern,sampler,startTime,endTime)
+}
 
-            const initPos = effects.initializePosition()
-            const setPos = effects.setPosition([x,y])
-            const setTime = effects.setTime(startTime+moduloTime)
-            const setDuration = effects.setDuration(wallDist)
-            const initScale = effects.initializeScale()
-            const setScale = effects.setScale([wallside,wallside,wallside])
-            
-            return effects.combineEffects([initPos,setPos,setTime,setDuration,initScale,setScale])
-        }
-    
-        return createWalls(copies, groupEffect, fake)
+export function wallSpiralPlace(startTime: number, endTime: number, startAngle: number, period: number, direction: number, wallDist = 0.125, xradius = 2, yradius = 1.5, xoffset = 0, yoffset = 1.25, wallside = 0.5, fake = false): Creator<remapper.Wall>
+{
+    const samples = wallSpiral(startTime,endTime,startAngle,period,direction,wallDist,xradius,yradius,xoffset,yoffset)
+
+    return geometry.placeWalls(samples, wallDist, wallside, fake)
 }
 
 // slowTime is a proportion as in animations, so 0 means spawn time, 0.5 means the time the player has to hit the note.

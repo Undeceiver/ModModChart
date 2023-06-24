@@ -54,3 +54,29 @@ export type Creator<T> = ((t:T) => T[])
 */
 export type TrackAnimation = ((time: number) => Effect<remapper.TrackValue>)
 export type TrackAnimationDefinition = ((duration: number, event:remapper.AnimationInternals.AbstractAnimation) => void)
+
+/*
+* Geometric patterns, for an individual point in time.
+* Dependence on numbers for a specific point in time goes from 0 to 1.
+*/
+export type PointPattern = remapper.Vec2
+export type LinePattern = ((v: number) => remapper.Vec2)
+export type SurfacePattern = ((v: [number, number]) => remapper.Vec2)
+
+/*
+* Now over time
+*/
+export type TimePattern<T> = ((time: number) => T)
+export type TimePointPattern = TimePattern<PointPattern> // Spirals belong here.
+export type TimeLinePattern = TimePattern<LinePattern> // Fields belong here.
+export type TimeSurfacePattern = TimePattern<SurfacePattern>
+
+/*
+* Ways to sample geometric patterns.
+*/
+export type LineSampler = number[]
+export type SurfaceSampler = [number, number][]
+export type TimeSampler = [number, number] // First number is offset beat, second number is frequency (in beats).
+
+export type TimeSamples<T> = [number,T][]
+export type PointTimeSamples = TimeSamples<remapper.Vec2>
