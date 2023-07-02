@@ -1,4 +1,4 @@
-import { TrackValue } from "https://deno.land/x/remapper@3.1.1/src/animation.ts";
+import { TrackValue, complexifyArray } from "https://deno.land/x/remapper@3.1.1/src/animation.ts";
 import * as remapper from "https://deno.land/x/remapper@3.1.1/src/mod.ts";
 
 export function fromVanillaToNEX(x: number)
@@ -32,30 +32,36 @@ export function beatsToTrackAnimationP(duration: number): ((beats: number) => nu
 export function beatsToTrackAnimationPLinear(duration: number): ((keyframes: remapper.KeyframesLinear) => remapper.KeyframesLinear)
 {
     return function(keyframes: remapper.KeyframesLinear)
-    {        
-        const result = []
-        for(const keyframe of keyframes)
+    {      
+        if(typeof keyframes === "string")
         {
-            const keyframeas = keyframe as [number,number]
-            result.push([keyframeas[0],beatsToTrackAnimationP(duration)(keyframeas[1])])
+            return keyframes
         }
-
-        return result as remapper.KeyframesLinear
+        else
+        {
+            const keyframes2 = complexifyArray(keyframes)
+            return keyframes2.map(keyframe =>
+                keyframe.map((x: number | any, i) =>
+                    (i == 1 && typeof x === "number") ? beatsToTrackAnimationP(duration)(x) : x)) as remapper.KeyframesLinear
+        }        
     }
 }
 
 export function beatsToTrackAnimationPVec3(duration: number): ((keyframes: remapper.KeyframesVec3) => remapper.KeyframesVec3)
 {
     return function(keyframes: remapper.KeyframesVec3)
-    {        
-        const result = []
-        for(const keyframe of keyframes)
+    {      
+        if(typeof keyframes === "string")
         {
-            const keyframeas = keyframe as [number,number,number,number]
-            result.push([keyframeas[0],keyframeas[1],keyframeas[2],beatsToTrackAnimationP(duration)(keyframeas[3])])
+            return keyframes
         }
-
-        return result as remapper.KeyframesVec3
+        else
+        {
+            const keyframes2 = complexifyArray(keyframes)
+            return keyframes2.map(keyframe =>
+                keyframe.map((x: number | any, i) =>
+                    (i == 3 && typeof x === "number") ? beatsToTrackAnimationP(duration)(x) : x)) as remapper.KeyframesVec3        
+        }        
     }
 }
 
@@ -70,4 +76,14 @@ export function trackAnimationPToBeats(duration: number): ((p: number) => number
 export function randomTrackName(): remapper.TrackValue
 {
     return Math.random().toString().substring(10)
+}
+
+export function degreesToRadians(degrees: number): number
+{
+    return degrees*Math.PI/180
+}
+
+export function radiansToDegrees(radians: number): number
+{
+    return radians*180/Math.PI
 }

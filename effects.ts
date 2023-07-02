@@ -4,6 +4,13 @@ import * as util from "./util.ts"
 import { mapEffect } from "./functions.ts";
 import { getCustomDataField } from "./functions.ts";
 
+export function noEffect<T>(): Effect<T>
+{
+    return function(t:T)
+    {
+        return
+    }
+}
 /*
 * Combining effects
 */
@@ -178,13 +185,20 @@ export function setPosition<T extends remapper.Note | remapper.Wall | remapper.B
 
 export function initializePosition<T extends remapper.Note | remapper.Wall | remapper.Bomb>(): Effect<T>
 {
-    return parameterizeEffectByField("x",
-        function(x: number)
+    return parameterizeEffect(
+        function(t: T)
         {
-            return parameterizeEffectByField("y",
-                function(y: number)
+            return parameterizeEffect(
+                function(t: T)
                 {
-                    return setPosition([util.fromVanillaToNEX(x),util.fromVanillaToNEY(y)] as remapper.Vec2)
+                    if("coordinates" in t.customData)                    
+                    {
+                        return noEffect()
+                    }
+                    else
+                    {
+                        return setPosition([util.fromVanillaToNEX(t.x),util.fromVanillaToNEY(t.y)] as remapper.Vec2)
+                    }
                 })            
         })
 }
@@ -215,19 +229,26 @@ export function setScale<T extends remapper.Wall>(scale: remapper.Vec3): Effect<
 
 export function initializeScale<T extends remapper.Wall>(): Effect<T>
 {
-    return parameterizeEffectByField("width",
-        function(width: number)
+    return parameterizeEffect(
+        function(t: T)
         {
-            return parameterizeEffectByField("height",
-                function(height: number)
+            return parameterizeEffect(
+                function(t: T)
                 {
-                    return parameterizeEffectByField("duration",
-                        function(duration: number)
+                    return parameterizeEffect(
+                        function(t: T)
                         {
-                            return parameterizeEffectByField("NJS",
-                                function(njs: number)
+                            return parameterizeEffect(
+                                function(t: T)
                                 {
-                                    return setScale([width, height, duration*njs] as remapper.Vec3)
+                                    if("scale" in t.customData)
+                                    {
+                                        return noEffect()
+                                    }
+                                    else
+                                    {
+                                        return setScale([t.width, t.height, t.duration*t.NJS] as remapper.Vec3)
+                                    }
                                 })                            
                         })
                 })            
@@ -241,6 +262,11 @@ export function addScale<T extends remapper.Wall>(scale: remapper.Vec3): Effect<
         {
             return setScale([scale[0] + prevScale[0],scale[1] + prevScale[1],scale[2] + prevScale[2]] as remapper.Vec3)
         })
+}
+
+export function setWorldRotation<T extends BSObject>(worldRotation: remapper.Vec3): Effect<T>
+{
+    return setValueEffect("rotation",worldRotation)
 }
 
 /*
@@ -316,13 +342,14 @@ export function trackAnimationEffect<T extends BSObject>(animation: TrackAnimati
     }
 }
 
-export function animateTrack(duration: number, animation: TrackAnimationDefinition): TrackAnimation
+export function animateTrack(duration: number, animation: TrackAnimationDefinition, easing: remapper.EASE | undefined = undefined): TrackAnimation
 {
+
     return function(time: number)
     {
         return function(track: remapper.TrackValue)
         {
-            const event = new remapper.CustomEvent(time).animateTrack(track, duration)            
+            const event = new remapper.CustomEvent(time).animateTrack(track, duration, undefined, easing)
             
             animation(duration,event.animate)
 
@@ -336,7 +363,7 @@ export function animatePositionTrack(position: remapper.KeyframesVec3): TrackAni
 {
     return function(duration, event)
     {
-        event.offsetPosition = util.beatsToTrackAnimationPVec3(duration)(position)
+        event.offsetPosition = util.beatsToTrackAnimationPVec3(duration)(position)        
     }
 }
 
@@ -348,10 +375,34 @@ export function animateScaleTrack(scale: remapper.KeyframesVec3): TrackAnimation
     }
 }
 
+export function animateRotationTrack(worldRotation: remapper.KeyframesVec3): TrackAnimationDefinition
+{
+    return function(duration, event)
+    {        
+        event.rotation = util.beatsToTrackAnimationPVec3(duration)(worldRotation)
+    }
+}
+
 export function animateWorldRotationTrack(worldRotation: remapper.KeyframesVec3): TrackAnimationDefinition
 {
     return function(duration, event)
+    {        
+        event.offsetRotation = util.beatsToTrackAnimationPVec3(duration)(worldRotation)
+    }
+}
+
+export function animateDissolveTrack(dissolve: remapper.KeyframesLinear): TrackAnimationDefinition
+{
+    return function(duration, event)
     {
-        event.rotation = util.beatsToTrackAnimationPVec3(duration)(worldRotation)
+        event.dissolve = util.beatsToTrackAnimationPLinear(duration)(dissolve)
+    }
+}
+
+export function animateDissolveArrowTrack(dissolve: remapper.KeyframesLinear): TrackAnimationDefinition
+{
+    return function(duration, event)
+    {
+        event.dissolveArrow = util.beatsToTrackAnimationPLinear(duration)(dissolve)
     }
 }

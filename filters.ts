@@ -63,6 +63,14 @@ export function beatFilter<T extends remapper.Note | remapper.Bomb | remapper.Wa
     }
 }
 
+export function laneFilter<T extends BSObject>(lane: number): Filter<T>
+{
+    return function(t: T)
+    {
+        return t.x == lane
+    }
+}
+
 export function beatModuloFilter<T extends BSObject>(quotient: number, minModulo: number, maxModulo: number, offset = 0)
 {
     return function(t: T)

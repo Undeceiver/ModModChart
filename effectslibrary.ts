@@ -3,9 +3,9 @@ import { Effect, NoteEffect, BombEffect, WallEffect, BSObject, NoteOrBomb, Creat
 import * as effects from "./effects.ts"
 import * as groups from "./groups.ts"
 import * as geometry from "./geometricpatterns.ts"
-import { fromVanillaToNEX, fromVanillaToNEY, randomTrackName } from "./util.ts"
+import { degreesToRadians, fromVanillaToNEX, fromVanillaToNEY, randomTrackName } from "./util.ts"
 import * as remapper from "https://deno.land/x/remapper@3.1.1/src/mod.ts";
-import { copyObject, createBombs, createWalls, effectOnFake, parameterizeCreation, parameterizeCreationByField } from "./creation.ts";
+import { copyObject, createBombs, createNotes, createWalls, effectOnFake, parameterizeCreation, parameterizeCreationByField } from "./creation.ts";
 import { customDataField, filterEffect, runVoidEffect } from "./functions.ts";
 import { noteTypeFilter } from "./filters.ts";
 import { HemisphereLight } from "https://cdn.skypack.dev/three?dts";
@@ -75,6 +75,40 @@ export function closingWall(startTime: number, startWidth: number, endTime: numb
                     return effects.combineEffects([pos_ef,width_ef])
                 })
         })        
+}
+
+// Creates a tower in the same direction as a certain note, starting from it and in the same angle.
+// For this to work properly, use direction 3 (pointing right) and angle offset (vanilla).
+// Make sure to have initialized the position of the source note, as it only reads the precision position.
+export function createTower(fake = false): Creator<Note>
+{
+    const notesize = 1.1
+
+    return parameterizeCreation(function(note: Note)
+    {
+        const angle = degreesToRadians(note.angleOffset)
+        //console.log("angle:"+angle)
+        const startPos = note.position
+        //console.log("startPos:"+startPos)
+
+        const groupEffect: NumberGroupEffect<Note> = function(v: number)
+        {            
+            const targetX = startPos[0] + notesize*(v+1)*Math.cos(angle)
+            //console.log("cos:" + Math.cos(angle))
+            //console.log("targetX:" + targetX)
+            const targetY = startPos[1] + notesize*(v+1)*Math.sin(angle)
+            //console.log("sin:" + Math.sin(angle))
+            //console.log("targetY:" + targetX)
+
+            const targetPos = [targetX,targetY] as remapper.Vec2
+
+            const addPos = effects.setPosition(targetPos)
+
+            return addPos
+        }       
+
+        return copyObject(2,groupEffect,fake)
+    })
 }
 
 export function curveIn<T extends BSObject>(startYaw: number, finalYaw = 0, finalTime = 0.5): Effect<T>
@@ -156,7 +190,7 @@ export function increasingWall(dir: number, freq = 0.1, total = 0.25): Creator<r
 
 export function initializePlayerRotation(worldRotation: remapper.KeyframesVec3, duration = 2): void
 {
-    const rotationDefinition = effects.animateWorldRotationTrack(worldRotation)
+    const rotationDefinition = effects.animateRotationTrack(worldRotation)
     const rotationAnimation = effects.animateTrack(duration,rotationDefinition)
 
     rotationAnimation(0)(playerTrack())    
@@ -223,6 +257,22 @@ export function invisible<T extends NoteOrBomb>(): Effect<T>
     const dissolveArrow = effects.animateDissolveArrow([[0,0],[0,1]])
 
     return effects.combineEffects([dissolve,dissolveArrow])
+}
+
+// Making notes appear without any spawn hint.
+// It appears at the JD on its HJD and then moves at the NJS. If you also want to modify that, modify it separately.
+export function noSpawn<T extends remapper.Note | remapper.Bomb>(): Effect<T>
+{
+    const dissolve: remapper.KeyframesLinear = [[0,0],[0,0.01],[1,0.0101]]
+    const dissolveArrow: remapper.KeyframesLinear = [[0,0],[0,0.01],[1,0.0101]]
+
+    const dissolveAnimation: Effect<T> = effects.animateDissolve(dissolve)
+    const dissolveArrowAnimation: Effect<T> = effects.animateDissolveArrow(dissolveArrow)
+
+    const disableSpawnEffect: Effect<T> = effects.disableSpawnEffect()
+    const disableNoteLook: Effect<T> = effects.disableNoteLook()
+
+    return effects.combineEffects([dissolveAnimation,dissolveArrowAnimation,disableSpawnEffect,disableNoteLook])
 }
 
 // Must have initialized position before.

@@ -80,3 +80,5 @@ export type TimeSampler = [number, number] // First number is offset beat, secon
 
 export type TimeSamples<T> = [number,T][]
 export type PointTimeSamples = TimeSamples<remapper.Vec2>
+
+export type TimePointPatternDefinition = [number,number,number,number,number,number][] // [time,angle,xradius,yradius,xoffset,yoffset]. The path begins on the first keyframe and ends at the last keyframe.
