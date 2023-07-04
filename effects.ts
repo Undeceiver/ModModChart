@@ -3,6 +3,7 @@ import * as remapper from "https://deno.land/x/remapper@3.1.1/src/mod.ts";
 import * as util from "./util.ts"
 import { mapEffect } from "./functions.ts";
 import { getCustomDataField } from "./functions.ts";
+import { Note } from "https://deno.land/x/remapper@3.1.1/src/note.ts";
 
 export function noEffect<T>(): Effect<T>
 {
@@ -220,6 +221,16 @@ export function setWidth<T extends remapper.Wall>(width: number): Effect<T>
 export function addWidth<T extends remapper.Wall>(width: number): Effect<T>
 {
     return addValueEffect("width",width)
+}
+
+export function setAngle(angle: number): Effect<Note>
+{
+    return setValueEffect("angleOffset",Math.round(angle))
+}
+
+export function addAngle(angle: number): Effect<Note>
+{
+    return addValueEffect("angleOffset",Math.round(angle))
 }
 
 export function setScale<T extends remapper.Wall>(scale: remapper.Vec3): Effect<T>

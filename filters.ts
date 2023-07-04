@@ -71,6 +71,14 @@ export function laneFilter<T extends BSObject>(lane: number): Filter<T>
     }
 }
 
+export function rowFilter<T extends BSObject>(row: number): Filter<T>
+{
+    return function(t: T)
+    {
+        return t.y == row
+    }
+}
+
 export function beatModuloFilter<T extends BSObject>(quotient: number, minModulo: number, maxModulo: number, offset = 0)
 {
     return function(t: T)
