@@ -3,7 +3,7 @@ import { Effect, NoteEffect, BombEffect, WallEffect, BSObject, NoteOrBomb, Creat
 import * as effects from "./effects.ts"
 import * as groups from "./groups.ts"
 import * as geometry from "./geometricpatterns.ts"
-import { degreesToRadians, fromVanillaToNEX, fromVanillaToNEY, randomTrackName } from "./util.ts"
+import { degreesToRadians, fromVanillaToNEX, fromVanillaToNEY, interpolateRotation, randomTrackName } from "./util.ts"
 import * as remapper from "https://deno.land/x/remapper@3.1.1/src/mod.ts";
 import { copyObject, createBombs, createNotes, createWalls, effectOnFake, parameterizeCreation, parameterizeCreationByField } from "./creation.ts";
 import { customDataField, filterEffect, runVoidEffect } from "./functions.ts";
@@ -442,6 +442,19 @@ export function queueObject<T extends remapper.Note | remapper.Bomb>(stepDistanc
     //const disableNoteLook: Effect<T> = effects.disableNoteLook()
 
     return effects.combineEffects([posAnimation])        
+}
+
+export function randomRotate<T extends BSObject>(minPitch: number, maxPitch: number, minYaw: number, maxYaw: number, minRoll: number, maxRoll: number, startP = 0, endP = 1): Effect<T>
+{
+    const pitch = minPitch+Math.random()*(maxPitch-minPitch)
+    const yaw = minYaw+Math.random()*(maxYaw-minYaw)
+    const roll = minRoll+Math.random()*(maxRoll-minRoll)
+
+    const rotation : remapper.KeyframesVec3 = [[0,0,0,startP],[pitch,yaw,roll,endP]]
+
+    const finalRotation = interpolateRotation(rotation)
+
+    return effects.animateLocalRotation(finalRotation)
 }
 
 // end is a proportion of the spawn animation

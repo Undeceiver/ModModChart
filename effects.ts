@@ -99,6 +99,15 @@ export function disableBadCutSaberType<T extends remapper.Note>(): Effect<T>
     }
 }
 
+export function makeFakeNote(map:remapper.Difficulty): Effect<remapper.Note>
+{
+    return function(t: remapper.Note)
+    {
+        t.push(true,false)
+        map.notes.splice(map.notes.indexOf(t),1)
+    }
+}
+
 /*
 * Setting values
 */
@@ -328,6 +337,14 @@ export function animateWorldRotation<T extends BSObject>(rotation: remapper.Keyf
     return function(obj: BSObject)
     {
         obj.animate.rotation = rotation
+    }
+}
+
+export function animateLocalRotation<T extends BSObject>(rotation: remapper.KeyframesVec3): Effect<T>
+{
+    return function(obj: BSObject)
+    {
+        obj.animate.localRotation = rotation
     }
 }
 
