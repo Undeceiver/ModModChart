@@ -77,6 +77,8 @@ export function sampleTime<T>(pattern: TimePattern<T>, sampler: TimeSampler, sta
     {
         if(t >= start)
         {
+            //console.log("T:" + t)
+            //console.log("Pattern(t):" + pattern(t))
             result.push([t,pattern(t)])
         }        
     }
