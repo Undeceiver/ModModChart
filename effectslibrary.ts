@@ -497,6 +497,12 @@ export function surge(stump = 0.4, duration = 0.75): Effect<remapper.Wall>
     return effects.parameterizeEffectByCustomData(customDataField("surge"),parametricEffect)
 }
 
+export function uninteractableAfterPlayer<T extends BSObject>(delta=0.02): Effect<T>
+{
+    return effects.animateUninteractable([[0,0],[1,0.5+delta]])
+}
+
+
 // direction basically horizontally mirrors the spiral
 export function wallSpiral(startTime: number, endTime: number, startAngle: number, period: number, direction: number, wallDist = 0.125, xradius = 2, yradius = 1.5, xoffset = 0, yoffset = 1.25): PointTimeSamples
 {

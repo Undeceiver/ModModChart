@@ -289,6 +289,11 @@ export function setWorldRotation<T extends BSObject>(worldRotation: remapper.Vec
     return setValueEffect("rotation",worldRotation)
 }
 
+export function setUninteractable<T extends BSObject>(uninteractable = true): Effect<T>
+{
+    return setValueEffect("interactable",!uninteractable)
+}
+
 /*
 * Path animations
 */
@@ -345,6 +350,14 @@ export function animateLocalRotation<T extends BSObject>(rotation: remapper.Keyf
     return function(obj: BSObject)
     {
         obj.animate.localRotation = rotation
+    }
+}
+
+export function animateUninteractable<T extends BSObject>(uninteractable: remapper.KeyframesLinear): Effect<T>
+{
+    return function(obj: BSObject)
+    {
+        obj.animate.uninteractable = uninteractable
     }
 }
 
