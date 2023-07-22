@@ -157,3 +157,16 @@ export function getWallReachProp(wall: remapper.Wall): number
 {
     return wall.halfJumpDur/(wall.halfJumpDur+wall.duration)
 }
+
+export function constFunction<A, B>(b : B): ((a: A) => B)
+{
+    return ((a: A) : B => { return b })
+}
+
+export function interpolateFunction(startIn: number, startOut: number, endIn: number, endOut: number): (v: number) => number
+{
+    return function(v: number)
+    {
+        return startOut + (v-startIn)*(endOut-startOut)/(endIn-startIn)
+    }
+}

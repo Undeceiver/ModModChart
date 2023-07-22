@@ -96,24 +96,34 @@ export function sampleTimePointPattern(pattern: TimePointPattern, timeSampler: T
 export function sampleTimeLinePattern(pattern: TimeLinePattern, lineSampler: LineSampler, timeSampler: TimeSampler, start: number, end: number): PointTimeSamples
 {
     const lines = sampleTime(pattern, timeSampler, start, end)
-    const result: [number,remapper.Vec2][] = []
+    //console.log("Lines: "+lines)
+    let result: [number,remapper.Vec2][] = []
 
     lines.forEach(
         function(sample: [number,LinePattern])
         {
             const points = sampleLine(sample[1], lineSampler)
+            //console.log("Points: " + points)
+            //console.log("Result before: " + result)
 
-            return points.map(
+            const next:[number,remapper.Vec2][] = points.map(
                 function(v: remapper.Vec2)
                 {
                     return [sample[0],v]
                 }
             )
+
+            //console.log("Next: " + next)
+
+            result = result.concat(next)
+
+            //console.log("Result after: " + result)
         }
     )
 
     result.reverse()
 
+    //console.log("Result: " + result)
     return result
 }
 

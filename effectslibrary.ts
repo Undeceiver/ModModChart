@@ -1,9 +1,9 @@
 import { Note } from "https://deno.land/x/remapper@3.1.1/src/note.ts";
-import { Effect, NoteEffect, BombEffect, WallEffect, BSObject, NoteOrBomb, Creator, GroupEffect, NumberGroupEffect, TrackAnimationDefinition, InterpolatedEffect, TimePointPattern, PointTimeSamples, TimeSampler } from "./types.ts";
+import { Effect, NoteEffect, BombEffect, WallEffect, BSObject, NoteOrBomb, Creator, GroupEffect, NumberGroupEffect, TrackAnimationDefinition, InterpolatedEffect, TimePointPattern, PointTimeSamples, TimeSampler, TimeLinePattern } from "./types.ts";
 import * as effects from "./effects.ts"
 import * as groups from "./groups.ts"
 import * as geometry from "./geometricpatterns.ts"
-import { degreesToRadians, fromVanillaToNEX, fromVanillaToNEY, interpolateRotation, randomTrackName } from "./util.ts"
+import { constFunction, degreesToRadians, fromVanillaToNEX, fromVanillaToNEY, interpolateRotation, randomTrackName } from "./util.ts"
 import * as remapper from "https://deno.land/x/remapper@3.1.1/src/mod.ts";
 import { copyObject, createBombs, createNotes, createWalls, effectOnFake, parameterizeCreation, parameterizeCreationByField } from "./creation.ts";
 import { customDataField, filterEffect, runVoidEffect } from "./functions.ts";
@@ -21,13 +21,41 @@ export function assignPlayerToTrack(track: remapper.TrackValue): Effect<void>
     }
 }
 
+// The resulting line pattern uses values between 0 (minAngle) to 1 (maxAngle)
+export function bombFieldEllipse(minAngle:(v:number) => number=constFunction(0), maxAngle:(v:number) => number=constFunction(360), 
+    xradius:(v:number) => number=constFunction(2.25), yradius:(v:number) => number=constFunction(1.5),
+    xoffset:(v:number) => number=constFunction(0), yoffset:(v:number) => number=constFunction(1.25)): TimeLinePattern
+{
+    const bombxoffset = -0.5
+    const bombyoffset = 0
+
+    return function(time: number)
+    {
+        const minAngleT = minAngle(time)
+        const maxAngleT = maxAngle(time)
+        const xradiusT = xradius(time)
+        const yradiusT = yradius(time)
+        const xoffsetT = xoffset(time)
+        const yoffsetT = yoffset(time)
+
+        return function(v: number)
+        {
+            const angle = minAngleT + v*(maxAngleT - minAngleT)
+            const x = bombxoffset + xoffsetT + xradiusT*Math.cos(degreesToRadians(angle))
+            const y = bombyoffset + yoffsetT + yradiusT*Math.sin(degreesToRadians(angle))
+
+            return [x,y]
+        }
+    }
+}
+
 // direction horizontally mirrors the spiral
 export function bombSpiral(startTime: number, endTime: number, startAngle: number, period: number, direction: number, bombDist = 0.125, xradius = 2, yradius = 1.5, xoffset = 0, yoffset = 1.25): PointTimeSamples
 {
     const pattern : TimePointPattern = function(time: number)
     {
         const moduloTime = time - startTime
-        const angle = startAngle + 2*Math.PI*moduloTime/period
+        const angle = degreesToRadians(startAngle) + 2*Math.PI*moduloTime/period
         const x = xoffset + direction*xradius*Math.cos(angle)
         const y = yoffset + yradius*Math.sin(angle)
 
@@ -497,9 +525,10 @@ export function surge(stump = 0.4, duration = 0.75): Effect<remapper.Wall>
     return effects.parameterizeEffectByCustomData(customDataField("surge"),parametricEffect)
 }
 
-export function uninteractableAfterPlayer<T extends BSObject>(delta=0.02): Effect<T>
+// Forget this, it's more complicated than this.
+export function uninteractableAfterPlayer<T extends BSObject>(): Effect<T>
 {
-    return effects.animateUninteractable([[0,0],[1,0.5+delta]])
+    return effects.animateUninteractable([[0,0],[0,0.5],[1,0.75]])
 }
 
 
@@ -509,7 +538,7 @@ export function wallSpiral(startTime: number, endTime: number, startAngle: numbe
     const pattern : TimePointPattern = function(time: number)
     {
         const moduloTime = time - startTime
-        const angle = startAngle + 2*Math.PI*moduloTime/period
+        const angle = degreesToRadians(startAngle) + 2*Math.PI*moduloTime/period
         const x = xoffset + direction*xradius*Math.cos(angle)
         const y = yoffset + yradius*Math.sin(angle)
 
