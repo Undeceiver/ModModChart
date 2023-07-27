@@ -525,10 +525,15 @@ export function surge(stump = 0.4, duration = 0.75): Effect<remapper.Wall>
     return effects.parameterizeEffectByCustomData(customDataField("surge"),parametricEffect)
 }
 
-// Forget this, it's more complicated than this.
-export function uninteractableAfterPlayer<T extends BSObject>(): Effect<T>
+// Make sure animation exists
+export function uninteractableAfterPlayer<T extends BSObject>(delta=0.04): Effect<T>
 {
-    return effects.animateUninteractable([[0,0],[0,0.5],[1,0.75]])
+    //return effects.animateUninteractable([[0,0],[0,1]])
+    return function(t: BSObject)
+    {
+        const anim = t.customData["animation"] as Record<string,unknown>
+        anim["interactable"] = [[1,0],[1,0.5+delta],[0,0.5+delta+0.1]]
+    }
 }
 
 
