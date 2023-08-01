@@ -11,8 +11,8 @@ import * as util from "file:///F:/ModModChart/util.ts"
 import { lerp } from "https://deno.land/x/remapper@3.1.1/src/general.ts"
 import { settings } from "https://deno.land/x/remapper@3.1.1/src/beatmap.ts"
 
-const curscript: string = "enhancedtech"
-//const curscript: string = "modcharttech"
+//const curscript: string = "enhancedtech"
+const curscript: string = "modcharttech"
 const ismodcharttech = function(){ return curscript == "modcharttech" }
 
 let map
@@ -276,12 +276,19 @@ const bombfield1_samples = geo.sampleTimeLinePattern(bombfield1,geo.basicLineSam
 const bombfield1_cr = geo.placeBombs(bombfield1_samples)
 fn.createWithIndividualEffect(bombfield1_cr,bomb_ef)(undefined as unknown as remapper.Bomb)
 
-const bombfield2 = eff.bombFieldEllipse(util.interpolateFunction(162.2,45,163.5,120),util.interpolateFunction(162.2,135,163.5,210))
+const bombfield2 = eff.bombFieldEllipse(util.interpolateFunction(162.2,60,163.5,135),util.interpolateFunction(162.2,135,163.5,210))
 const bombfield2_sampler = geo.timeSampler(162.2,bombFreq)
-const bombfield2_samples = geo.sampleTimeLinePattern(bombfield2,geo.basicLineSampler((135-45)/bombAngleStep),bombfield2_sampler,162.2,163.5)
+const bombfield2_samples = geo.sampleTimeLinePattern(bombfield2,geo.basicLineSampler((135-60)/bombAngleStep),bombfield2_sampler,162.2,163.5)
 
 const bombfield2_cr = geo.placeBombs(bombfield2_samples)
 fn.createWithIndividualEffect(bombfield2_cr,bomb_ef)(undefined as unknown as remapper.Bomb)
+
+const bombfield2_2 = eff.bombFieldEllipse(util.interpolateFunction(162.2,-85,163.5,-15),util.interpolateFunction(162.2,-85,163.5,-15))
+const bombfield2_2_sampler = geo.timeSampler(162.2,bombFreq)
+const bombfield2_2_samples = geo.sampleTimeLinePattern(bombfield2_2,geo.basicLineSampler(1),bombfield2_2_sampler,162.2,163.5)
+
+const bombfield2_2_cr = geo.placeBombs(bombfield2_2_samples)
+fn.createWithIndividualEffect(bombfield2_2_cr,bomb_ef)(undefined as unknown as remapper.Bomb)
 
 const bombfield3 = eff.bombFieldEllipse(util.interpolateFunction(168.2,240,169.5,270),util.interpolateFunction(168.2,60,169.5,90))
 const bombfield3_sampler = geo.timeSampler(168.2,bombFreq)
@@ -290,12 +297,19 @@ const bombfield3_samples = geo.sampleTimeLinePattern(bombfield3,geo.basicLineSam
 const bombfield3_cr = geo.placeBombs(bombfield3_samples)
 fn.createWithIndividualEffect(bombfield3_cr,bomb_ef)(undefined as unknown as remapper.Bomb)
 
-const bombfield4 = eff.bombFieldEllipse(util.interpolateFunction(170.2,135,171.5,75),util.interpolateFunction(170.2,45,171.5,-15))
+const bombfield4 = eff.bombFieldEllipse(util.interpolateFunction(170.2,120,171.5,60),util.interpolateFunction(170.2,45,171.5,-15))
 const bombfield4_sampler = geo.timeSampler(170.2,bombFreq)
-const bombfield4_samples = geo.sampleTimeLinePattern(bombfield4,geo.basicLineSampler((135-45)/bombAngleStep),bombfield4_sampler,170.2,171.5)
+const bombfield4_samples = geo.sampleTimeLinePattern(bombfield4,geo.basicLineSampler((135-60)/bombAngleStep),bombfield4_sampler,170.2,171.5)
 
 const bombfield4_cr = geo.placeBombs(bombfield4_samples)
 fn.createWithIndividualEffect(bombfield4_cr,bomb_ef)(undefined as unknown as remapper.Bomb)
+
+const bombfield4_2 = eff.bombFieldEllipse(util.interpolateFunction(170.2,265,171.5,195),util.interpolateFunction(170.2,265,171.5,195))
+const bombfield4_2_sampler = geo.timeSampler(170.2,bombFreq)
+const bombfield4_2_samples = geo.sampleTimeLinePattern(bombfield4_2,geo.basicLineSampler(1),bombfield4_2_sampler,170.2,171.5)
+
+const bombfield4_2_cr = geo.placeBombs(bombfield4_2_samples)
+fn.createWithIndividualEffect(bombfield4_2_cr,bomb_ef)(undefined as unknown as remapper.Bomb)
 
 const bombfield5 = eff.bombFieldEllipse(util.interpolateFunction(176.2,0,177.5,-15),util.interpolateFunction(176.2,90,177.5,75))
 const bombfield5_sampler = geo.timeSampler(176.2,bombFreq)
@@ -311,12 +325,19 @@ const bombfield5_2_samples = geo.sampleTimeLinePattern(bombfield5_2,geo.basicLin
 const bombfield5_2_cr = geo.placeBombs(bombfield5_2_samples)
 fn.createWithIndividualEffect(bombfield5_2_cr,bomb_ef)(undefined as unknown as remapper.Bomb)
 
-const bombfield6 = eff.bombFieldEllipse(util.interpolateFunction(178.2,45,179.5,90),util.interpolateFunction(178.2,135,179.5,180))
+const bombfield6 = eff.bombFieldEllipse(util.interpolateFunction(178.2,60,179.5,105),util.interpolateFunction(178.2,135,179.5,180))
 const bombfield6_sampler = geo.timeSampler(178.2,bombFreq)
-const bombfield6_samples = geo.sampleTimeLinePattern(bombfield6,geo.basicLineSampler((135-45)/bombAngleStep),bombfield6_sampler,178.2,179.5)
+const bombfield6_samples = geo.sampleTimeLinePattern(bombfield6,geo.basicLineSampler((135-60)/bombAngleStep),bombfield6_sampler,178.2,179.5)
 
 const bombfield6_cr = geo.placeBombs(bombfield6_samples)
 fn.createWithIndividualEffect(bombfield6_cr,bomb_ef)(undefined as unknown as remapper.Bomb)
+
+const bombfield6_2 = eff.bombFieldEllipse(util.interpolateFunction(178.2,-85,179.5,-15),util.interpolateFunction(178.2,-85,179.5,-15))
+const bombfield6_2_sampler = geo.timeSampler(178.2,bombFreq)
+const bombfield6_2_samples = geo.sampleTimeLinePattern(bombfield6_2,geo.basicLineSampler(1),bombfield6_2_sampler,178.2,179.5)
+
+const bombfield6_2_cr = geo.placeBombs(bombfield6_2_samples)
+fn.createWithIndividualEffect(bombfield6_2_cr,bomb_ef)(undefined as unknown as remapper.Bomb)
 
 const bombfield7 = eff.bombFieldEllipse(util.interpolateFunction(184.2,240,185.5,270),util.interpolateFunction(184.2,60,185.5,90))
 const bombfield7_sampler = geo.timeSampler(184.2,bombFreq)
@@ -325,12 +346,19 @@ const bombfield7_samples = geo.sampleTimeLinePattern(bombfield7,geo.basicLineSam
 const bombfield7_cr = geo.placeBombs(bombfield7_samples)
 fn.createWithIndividualEffect(bombfield7_cr,bomb_ef)(undefined as unknown as remapper.Bomb)
 
-const bombfield8 = eff.bombFieldEllipse(util.interpolateFunction(186.2,135,187.5,60),util.interpolateFunction(186.2,45,187.5,-30))
+const bombfield8 = eff.bombFieldEllipse(util.interpolateFunction(186.2,120,187.5,60),util.interpolateFunction(186.2,45,187.5,-15))
 const bombfield8_sampler = geo.timeSampler(186.2,bombFreq)
-const bombfield8_samples = geo.sampleTimeLinePattern(bombfield8,geo.basicLineSampler((135-45)/bombAngleStep),bombfield8_sampler,186.2,187.5)
+const bombfield8_samples = geo.sampleTimeLinePattern(bombfield8,geo.basicLineSampler((135-60)/bombAngleStep),bombfield8_sampler,186.2,187.5)
 
 const bombfield8_cr = geo.placeBombs(bombfield8_samples)
 fn.createWithIndividualEffect(bombfield8_cr,bomb_ef)(undefined as unknown as remapper.Bomb)
+
+const bombfield8_2 = eff.bombFieldEllipse(util.interpolateFunction(186.2,265,187.5,195),util.interpolateFunction(186.2,265,187.5,195))
+const bombfield8_2_sampler = geo.timeSampler(186.2,bombFreq)
+const bombfield8_2_samples = geo.sampleTimeLinePattern(bombfield8_2,geo.basicLineSampler(1),bombfield8_2_sampler,186.2,187.5)
+
+const bombfield8_2_cr = geo.placeBombs(bombfield8_2_samples)
+fn.createWithIndividualEffect(bombfield8_2_cr,bomb_ef)(undefined as unknown as remapper.Bomb)
 
 const bombfield9 = eff.bombFieldEllipse(util.interpolateFunction(190.2,-105,191.5,-120),util.interpolateFunction(190.2,-75,191.5,-60))
 const bombfield9_sampler = geo.timeSampler(190.2,bombFreq)
@@ -1137,12 +1165,19 @@ const bombfield30_samples = geo.sampleTimeLinePattern(bombfield30,geo.basicLineS
 const bombfield30_cr = geo.placeBombs(bombfield30_samples)
 fn.createWithIndividualEffect(bombfield30_cr,bomb_ef)(undefined as unknown as remapper.Bomb)
 
-const bombfield31 = eff.bombFieldEllipse(util.interpolateFunction(386.2,45,387.5,120),util.interpolateFunction(386.2,135,387.5,210))
+const bombfield31 = eff.bombFieldEllipse(util.interpolateFunction(386.2,60,387.5,135),util.interpolateFunction(386.2,135,387.5,210))
 const bombfield31_sampler = geo.timeSampler(386.2,bombFreq)
-const bombfield31_samples = geo.sampleTimeLinePattern(bombfield31,geo.basicLineSampler((135-45)/bombAngleStep),bombfield31_sampler,386.2,387.5)
+const bombfield31_samples = geo.sampleTimeLinePattern(bombfield31,geo.basicLineSampler((135-60)/bombAngleStep),bombfield31_sampler,386.2,387.5)
 
 const bombfield31_cr = geo.placeBombs(bombfield31_samples)
 fn.createWithIndividualEffect(bombfield31_cr,bomb_ef)(undefined as unknown as remapper.Bomb)
+
+const bombfield31_2 = eff.bombFieldEllipse(util.interpolateFunction(386.2,-85,387.5,-15),util.interpolateFunction(386.2,-85,387.5,-15))
+const bombfield31_2_sampler = geo.timeSampler(386.2,bombFreq)
+const bombfield31_2_samples = geo.sampleTimeLinePattern(bombfield31_2,geo.basicLineSampler(1),bombfield31_2_sampler,386.2,387.5)
+
+const bombfield31_2_cr = geo.placeBombs(bombfield31_2_samples)
+fn.createWithIndividualEffect(bombfield31_2_cr,bomb_ef)(undefined as unknown as remapper.Bomb)
 
 const bombfield32 = eff.bombFieldEllipse(util.interpolateFunction(390.2,-105,391.5,-120),util.interpolateFunction(390.2,-75,391.5,-60))
 const bombfield32_sampler = geo.timeSampler(390.2,bombFreq)
