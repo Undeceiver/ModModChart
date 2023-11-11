@@ -5,8 +5,8 @@ import * as groups from "./groups.ts"
 import * as geometry from "./geometricpatterns.ts"
 import { constFunction, degreesToRadians, fromVanillaToNEX, fromVanillaToNEY, interpolateRotation, randomTrackName } from "./util.ts"
 import * as remapper from "https://deno.land/x/remapper@3.1.1/src/mod.ts";
-import { copyObject, createBombs, createNotes, createWalls, effectOnFake, parameterizeCreation, parameterizeCreationByField } from "./creation.ts";
-import { customDataField, filterEffect, runVoidEffect } from "./functions.ts";
+import { copyObject, createBombs, createNotes, createWalls, effectOnFake, noCreation, parameterizeCreation, parameterizeCreationByField } from "./creation.ts";
+import { createAndEffect, createWithEffect, customDataField, filterEffect, runVoidEffect } from "./functions.ts";
 import { noteTypeFilter } from "./filters.ts";
 import { HemisphereLight } from "https://cdn.skypack.dev/three?dts";
 import { timeSampler } from "./geometricpatterns.ts";
@@ -108,11 +108,13 @@ export function closingWall(startTime: number, startWidth: number, endTime: numb
 // Creates a tower in the same direction as a certain note, starting from it and in the same angle.
 // For this to work properly, use direction 3 (pointing right) and angle offset (vanilla).
 // Make sure to have initialized the position of the source note, as it only reads the precision position.
-export function createTower(fake = false): Creator<Note>
+export function createTower(nextra = 2, fake = false): Creator<Note>
 {
     const notesize = 1.1
 
-    return parameterizeCreation(function(note: Note)
+    const nogravity = effects.disableNoteGravity()
+
+    return createAndEffect(parameterizeCreation(function(note: Note)
     {
         const angle = degreesToRadians(note.angleOffset)
         //console.log("angle:"+angle)
@@ -130,13 +132,13 @@ export function createTower(fake = false): Creator<Note>
 
             const targetPos = [targetX,targetY] as remapper.Vec2
 
-            const addPos = effects.setPosition(targetPos)
+            const addPos = effects.setPosition(targetPos)            
 
-            return addPos
+            return effects.combineEffects([addPos,nogravity])
         }       
 
-        return copyObject(2,groupEffect,fake)
-    })
+        return copyObject(nextra,groupEffect,fake)
+    }),nogravity)
 }
 
 export function curveIn<T extends BSObject>(startYaw: number, finalYaw = 0, finalTime = 0.5): Effect<T>
@@ -560,6 +562,89 @@ export function wallSpiralPlace(startTime: number, endTime: number, startAngle: 
     const samples = wallSpiral(startTime,endTime,startAngle,period,direction,wallDist,xradius,yradius,xoffset,yoffset)
 
     return geometry.placeWalls(samples, wallDist, wallside, fake)
+}
+
+// Set distortion effects to false with settings setter for this.
+/*export function windowWall(red = 0.75, green = 0.2, blue = 0): Effect<remapper.Wall>
+{
+    return effects.setColor(red,green,blue,0)
+}*/
+// This assumes that the position and scale have been initialized
+export function windowWall(borderThickness = 0.1): Creator<remapper.Wall>
+{
+    return parameterizeCreation(function(wall: remapper.Wall): Creator<remapper.Wall>
+    {
+        const startX = wall.position[0]
+        const startY = wall.position[1]
+        const endX = wall.position[0] + wall.scale[0]
+        const endY = wall.position[1] + wall.scale[1]
+        const depth = wall.scale[2]
+
+        const broad = (endX - startX) > borderThickness*2
+        const tall = (endY - startY) > borderThickness*2
+
+        if(broad && tall)
+        {
+            // Split
+            const fun = function(i: number): Effect<remapper.Wall>
+            {
+                let minX, width, minY, height : number
+
+                if(i == 0)
+                {
+                    // Top
+                    minX = startX
+                    width = endX - startX
+                    minY = endY - borderThickness
+                    height = borderThickness
+                }
+                else if(i == 1)
+                {
+                    // Right
+                    minX = endX - borderThickness
+                    width = borderThickness
+                    minY = startY
+                    height = endY - startY
+                }
+                else if(i == 2)
+                {
+                    // Bottom
+                    minX = startX
+                    width = endX - startX
+                    minY = startY
+                    height = borderThickness
+                }
+                else if(i == 3)
+                {
+                    // Left
+                    minX = startX
+                    width = borderThickness
+                    minY = startY
+                    height = endY - startY
+                }
+                else
+                {
+                    console.log("Border wall with unknown index!: " + i)
+                    return effects.noEffect()
+                }
+
+                const setpos = effects.setPosition([minX,minY])
+                const setscale = effects.setScale([width,height,depth])
+
+                return effects.combineEffects([setpos,setscale])
+            }
+
+            const copy = copyObject(4,fun)
+            const dissolve = effects.animateDissolve([[0,0],[0,1]])
+
+            return createAndEffect(copy,dissolve)
+        }
+        else
+        {
+            // If it is narrow and/or short height, just leave it as is.
+            return noCreation()
+        }
+    })
 }
 
 // slowTime is a proportion as in animations, so 0 means spawn time, 0.5 means the time the player has to hit the note.

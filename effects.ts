@@ -261,13 +261,13 @@ export function initializeScale<T extends remapper.Wall>(): Effect<T>
                             return parameterizeEffect(
                                 function(t: T)
                                 {
-                                    if("scale" in t.customData)
+                                    if("size" in t.customData)
                                     {
                                         return noEffect()
                                     }
                                     else
                                     {
-                                        return setScale([t.width, t.height, t.duration*t.NJS] as remapper.Vec3)
+                                        return setScale([t.width, t.height, null as unknown as number] as remapper.Vec3)
                                     }
                                 })                            
                         })
@@ -294,6 +294,11 @@ export function setUninteractable<T extends BSObject>(uninteractable = true): Ef
     return setValueEffect("interactable",!uninteractable)
 }
 
+export function setColor<T extends BSObject>(red: number, green: number, blue: number, alpha: number): Effect<T>
+{
+    return setValueEffect("color",[red,green,blue,alpha])
+}
+
 /*
 * Path animations
 */
@@ -313,9 +318,9 @@ export function animatePosition<T extends BSObject>(position: remapper.Keyframes
     }
 }
 
-export function animateDissolve<T extends remapper.Note | remapper.Bomb>(dissolve: remapper.KeyframesLinear): Effect<T>
+export function animateDissolve<T extends remapper.Note | remapper.Bomb | remapper.Wall>(dissolve: remapper.KeyframesLinear): Effect<T>
 {
-    return function(obj: remapper.Note | remapper.Bomb)
+    return function(obj: remapper.Note | remapper.Bomb | remapper.Wall)
     {
         obj.animate.dissolve = dissolve
     }

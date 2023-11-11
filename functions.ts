@@ -103,6 +103,18 @@ export function createWithIndividualEffect<T>(creator: Creator<T>, effect: Effec
     return createWithEffect(creator,mapEffect(effect))
 }
 
+export function createAndEffect<T>(creator: Creator<T>, effect: Effect<T>): Creator<T>
+{
+    return function(t: T)
+    {
+        const results: T[] = creator(t)
+
+        effect(t)
+
+        return results
+    }
+}
+
 export function mapCreate<T>(creator: Creator<T>): Creator<T[]>
 {
     return function(objects: T[])

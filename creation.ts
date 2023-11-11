@@ -4,6 +4,13 @@ import { LightRemapper } from "https://deno.land/x/remapper@3.1.1/src/light_rema
 import { nothingGroupEffect } from "./groups.ts";
 import { createWithEffect, createWithIndividualEffect, getCustomDataField } from "./functions.ts";
 
+export function noCreation<T>(): Creator<T>
+{
+    return function(t:T)
+    {
+        return []
+    }
+}
 export function parameterizeCreation<T>(creator: ((t:T) => Creator<T>)): Creator<T>
 {
     return function(t:T)
