@@ -1,5 +1,5 @@
 import * as remapper from "https://deno.land/x/remapper@3.1.1/src/mod.ts";
-import { BSObject, Creator, LinePattern, LineSampler, NumberGroupEffect, PointTimeSamples, SurfacePattern, SurfaceSampler, TimeLinePattern, TimePattern, TimePointPattern, TimePointPatternDefinition, TimeSampler, TimeSamples, TimeSurfacePattern } from "./types.ts";
+import { BSBasicObject, Creator, LinePattern, LineSampler, NumberGroupEffect, PointTimeSamples, SurfacePattern, SurfaceSampler, TimeLinePattern, TimePattern, TimePointPattern, TimePointPatternDefinition, TimeSampler, TimeSamples, TimeSurfacePattern } from "./types.ts";
 import { periodicEffect } from "./effectslibrary.ts";
 import { Bomb } from "https://deno.land/x/remapper@3.1.1/src/note.ts";
 import { combineEffects, disableNoteGravity, initializePosition, initializeScale, setDuration, setPosition, setScale, setTime } from "./effects.ts";

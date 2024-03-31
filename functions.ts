@@ -1,4 +1,4 @@
-import { NoteFilter, BombFilter, WallFilter, Filter, Effect, Creator, CustomDataField, BSObject } from "./types.ts";
+import { NoteFilter, BombFilter, WallFilter, Filter, Effect, Creator, CustomDataField, BSBasicObject } from "./types.ts";
 import * as remapper from "https://deno.land/x/remapper@3.1.1/src/mod.ts";
 
 // These wrappers hardly do anything, so arguably they're unnecessary. Don't use them if you prefer to use ReMapper directly for this.
@@ -15,6 +15,31 @@ export function selectAllBombs(): remapper.Bomb[]
 export function selectAllWalls(): remapper.Wall[]
 {
     return remapper.activeDiffGet().walls
+}
+
+export function selectAllChains(): remapper.Chain[]
+{
+    return remapper.activeDiffGet().chains
+}
+
+export function selectAllFakeNotes(): remapper.Note[]
+{
+    return remapper.activeDiffGet().fakeNotes
+}
+
+export function selectAllFakeBombs(): remapper.Bomb[]
+{
+    return remapper.activeDiffGet().fakeBombs
+}
+
+export function selectAllFakeWalls(): remapper.Wall[]
+{
+    return remapper.activeDiffGet().fakeWalls
+}
+
+export function selectAllFakeChains(): remapper.Chain[]
+{
+    return remapper.activeDiffGet().fakeChains
 }
 // In addition, you're encouraged to use the "between" functions of ReMapper as a starting point for a note array.
 
@@ -140,7 +165,7 @@ function getCustomDataFieldInner<V>(customData: Record<string,unknown>, field: C
     }
 }
 
-export function getCustomDataField<T extends BSObject,V>(field: CustomDataField): ((t: T) => V)
+export function getCustomDataField<T extends BSBasicObject,V>(field: CustomDataField): ((t: T) => V)
 {
     return function(t: T): V
     {

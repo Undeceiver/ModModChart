@@ -1,5 +1,5 @@
 import * as remapper from "https://deno.land/x/remapper@3.1.1/src/mod.ts";
-import { Effect, Creator, GroupEffect, NumberGroupEffect, BSObject, CustomDataField } from "./types.ts";
+import { Effect, Creator, GroupEffect, NumberGroupEffect, BSBasicObject, CustomDataField, BSObject } from "./types.ts";
 import { LightRemapper } from "https://deno.land/x/remapper@3.1.1/src/light_remapper.ts";
 import { nothingGroupEffect } from "./groups.ts";
 import { createWithEffect, createWithIndividualEffect, getCustomDataField } from "./functions.ts";
@@ -27,7 +27,7 @@ export function parameterizeCreationByField<T,K extends keyof T>(field: K, creat
     }
 }
 
-export function parameterizeCreationByCustomData<T extends BSObject,V>(field: CustomDataField, creator: (v: V) => Creator<T>): Creator<T>
+export function parameterizeCreationByCustomData<T extends BSBasicObject,V>(field: CustomDataField, creator: (v: V) => Creator<T>): Creator<T>
 {
     return function(t: T)
     {
@@ -101,7 +101,7 @@ export function copyObject<T extends BSObject>(copies = 1, fn: NumberGroupEffect
     }
 }
 
-export function effectOnFake<T extends BSObject>(effect: Effect<T>): Creator<T>
+export function effectOnFake<T extends BSBasicObject>(effect: Effect<T>): Creator<T>
 {
     return createWithIndividualEffect(copyObject<T>(1,nothingGroupEffect,true),effect)
 }

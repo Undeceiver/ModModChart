@@ -36,22 +36,22 @@ const dropNJS = 13
 const dropExtraHJD = 0.5
 
 const interpolate_drop_notes_1: remapper.Note[] = fn.filterObjects(allnotes, fl.beatFilter(91,92.05))
-const interpolate_drop_njs_1: ty.Effect<ty.BSObject> = eff.interpolateNJS(91,map.NJS,92,dropNJS)
-const interpolate_drop_hjd_1: ty.Effect<ty.BSObject> = eff.interpolateHJD(91,mapHJD,92,mapHJD+dropExtraHJD)
-const interpolate_drop_ef_1: ty.Effect<ty.BSObject> = ef.combineEffects([interpolate_drop_njs_1,interpolate_drop_hjd_1])
+const interpolate_drop_njs_1: ty.Effect<ty.BSBasicObject> = eff.interpolateNJS(91,map.NJS,92,dropNJS)
+const interpolate_drop_hjd_1: ty.Effect<ty.BSBasicObject> = eff.interpolateHJD(91,mapHJD,92,mapHJD+dropExtraHJD)
+const interpolate_drop_ef_1: ty.Effect<ty.BSBasicObject> = ef.combineEffects([interpolate_drop_njs_1,interpolate_drop_hjd_1])
 fn.mapEffect(interpolate_drop_ef_1)(interpolate_drop_notes_1)
 
 // And at the end
 const interpolate_drop_notes_2: remapper.Note[] = fn.filterObjects(allnotes, fl.beatFilter(156,157.05))
-const interpolate_drop_njs_2: ty.Effect<ty.BSObject> = eff.interpolateNJS(156,dropNJS,157,map.NJS)
-const interpolate_drop_hjd_2: ty.Effect<ty.BSObject> = eff.interpolateHJD(156,mapHJD+dropExtraHJD,157,mapHJD)
-const interpolate_drop_ef_2: ty.Effect<ty.BSObject> = ef.combineEffects([interpolate_drop_njs_2,interpolate_drop_hjd_2])
+const interpolate_drop_njs_2: ty.Effect<ty.BSBasicObject> = eff.interpolateNJS(156,dropNJS,157,map.NJS)
+const interpolate_drop_hjd_2: ty.Effect<ty.BSBasicObject> = eff.interpolateHJD(156,mapHJD+dropExtraHJD,157,mapHJD)
+const interpolate_drop_ef_2: ty.Effect<ty.BSBasicObject> = ef.combineEffects([interpolate_drop_njs_2,interpolate_drop_hjd_2])
 fn.mapEffect(interpolate_drop_ef_2)(interpolate_drop_notes_2)
 
 const drop_notes: remapper.Note[] = fn.filterObjects(allnotes,fl.beatFilter(92,156.5))
-const drop_njs_slow: ty.Effect<ty.BSObject> = ef.setNJS(dropNJS)
-const drop_hjd_increase: ty.Effect<ty.BSObject> = ef.addHJD(dropExtraHJD)
-const drop_efs: ty.Effect<ty.BSObject> = ef.combineEffects([drop_njs_slow,drop_hjd_increase])
+const drop_njs_slow: ty.Effect<ty.BSBasicObject> = ef.setNJS(dropNJS)
+const drop_hjd_increase: ty.Effect<ty.BSBasicObject> = ef.addHJD(dropExtraHJD)
+const drop_efs: ty.Effect<ty.BSBasicObject> = ef.combineEffects([drop_njs_slow,drop_hjd_increase])
 fn.mapEffect(drop_efs)(drop_notes)
 
 const drop_group_three_notes: remapper.Note[] = fn.filterObjects(allnotes,fl.labelFilter("dropthree"))
@@ -72,9 +72,9 @@ fn.mapEffect(drop_wall_njs_ef)(drop_walls)
 
 // And second "drop"
 const interpolate_drop_notes_3: remapper.Note[] = fn.filterObjects(allnotes, fl.beatFilter(219,220.05))
-const interpolate_drop_njs_3: ty.Effect<ty.BSObject> = eff.interpolateNJS(219,map.NJS,220,dropNJS)
-const interpolate_drop_hjd_3: ty.Effect<ty.BSObject> = eff.interpolateHJD(219,mapHJD,220,mapHJD+dropExtraHJD)
-const interpolate_drop_ef_3: ty.Effect<ty.BSObject> = ef.combineEffects([interpolate_drop_njs_3,interpolate_drop_hjd_3])
+const interpolate_drop_njs_3: ty.Effect<ty.BSBasicObject> = eff.interpolateNJS(219,map.NJS,220,dropNJS)
+const interpolate_drop_hjd_3: ty.Effect<ty.BSBasicObject> = eff.interpolateHJD(219,mapHJD,220,mapHJD+dropExtraHJD)
+const interpolate_drop_ef_3: ty.Effect<ty.BSBasicObject> = ef.combineEffects([interpolate_drop_njs_3,interpolate_drop_hjd_3])
 fn.mapEffect(interpolate_drop_ef_3)(interpolate_drop_notes_3)
 
 // And at the end
@@ -82,15 +82,15 @@ const prefinalNJS = 14
 const prefinalHJD = 0.5
 
 const interpolate_drop_notes_4: remapper.Note[] = fn.filterObjects(allnotes, fl.beatFilter(284,285.05))
-const interpolate_drop_njs_4: ty.Effect<ty.BSObject> = eff.interpolateNJS(284,dropNJS,285,prefinalNJS)
-const interpolate_drop_hjd_4: ty.Effect<ty.BSObject> = eff.interpolateHJD(284,mapHJD+dropExtraHJD,285,mapHJD+prefinalHJD)
-const interpolate_drop_ef_4: ty.Effect<ty.BSObject> = ef.combineEffects([interpolate_drop_njs_4,interpolate_drop_hjd_4])
+const interpolate_drop_njs_4: ty.Effect<ty.BSBasicObject> = eff.interpolateNJS(284,dropNJS,285,prefinalNJS)
+const interpolate_drop_hjd_4: ty.Effect<ty.BSBasicObject> = eff.interpolateHJD(284,mapHJD+dropExtraHJD,285,mapHJD+prefinalHJD)
+const interpolate_drop_ef_4: ty.Effect<ty.BSBasicObject> = ef.combineEffects([interpolate_drop_njs_4,interpolate_drop_hjd_4])
 fn.mapEffect(interpolate_drop_ef_4)(interpolate_drop_notes_4)
 
 const drop_notes_2: remapper.Note[] = fn.filterObjects(allnotes,fl.beatFilter(220,284.5))
-const drop_njs_slow_2: ty.Effect<ty.BSObject> = ef.setNJS(dropNJS)
-const drop_hjd_increase_2: ty.Effect<ty.BSObject> = ef.addHJD(dropExtraHJD)
-const drop_efs_2: ty.Effect<ty.BSObject> = ef.combineEffects([drop_njs_slow_2,drop_hjd_increase_2])
+const drop_njs_slow_2: ty.Effect<ty.BSBasicObject> = ef.setNJS(dropNJS)
+const drop_hjd_increase_2: ty.Effect<ty.BSBasicObject> = ef.addHJD(dropExtraHJD)
+const drop_efs_2: ty.Effect<ty.BSBasicObject> = ef.combineEffects([drop_njs_slow_2,drop_hjd_increase_2])
 fn.mapEffect(drop_efs_2)(drop_notes_2)
 
 // Groups themselves are already affected by the first pass.
@@ -102,9 +102,9 @@ fn.mapEffect(drop_wall_njs_ef_2)(drop_walls_2)
 
 // Prefinal section
 const prefinal_notes: remapper.Note[] = fn.filterObjects(allnotes,fl.beatFilter(285,316))
-const prefinal_slow: ty.Effect<ty.BSObject> = ef.setNJS(prefinalNJS)
-const prefinal_hjd_increase: ty.Effect<ty.BSObject> = ef.addHJD(prefinalHJD)
-const prefinal_efs_2: ty.Effect<ty.BSObject> = ef.combineEffects([prefinal_slow,prefinal_hjd_increase])
+const prefinal_slow: ty.Effect<ty.BSBasicObject> = ef.setNJS(prefinalNJS)
+const prefinal_hjd_increase: ty.Effect<ty.BSBasicObject> = ef.addHJD(prefinalHJD)
+const prefinal_efs_2: ty.Effect<ty.BSBasicObject> = ef.combineEffects([prefinal_slow,prefinal_hjd_increase])
 fn.mapEffect(prefinal_efs_2)(prefinal_notes)
 
 const prefinal_group_three_notes: remapper.Note[] = fn.filterObjects(allnotes,fl.labelFilter("prefinalthree"))
@@ -136,10 +136,10 @@ fn.mapEffect(zoom_wall_efs)(zoom_walls)
 const finalNJS = 19.9
 const final_notes: remapper.Note[] = fn.filterObjects(allnotes, fl.beatFilter(316,344))
 const final_walls: remapper.Wall[] = fn.filterObjects(allwalls, fl.beatFilter(316,344))
-const interpolate_final_njs: ty.Effect<ty.BSObject> = eff.interpolateNJS(316,prefinalNJS,344,finalNJS)
-const final_real_njs: ty.Effect<ty.BSObject> = ef.setNJS(prefinalNJS)
-const final_groups: ty.Effect<ty.BSObject> = eff.spawnGroups(0.8,2,316)
-const final_ef: ty.Effect<ty.BSObject> = ef.combineEffects([interpolate_final_njs, final_groups])
+const interpolate_final_njs: ty.Effect<ty.BSBasicObject> = eff.interpolateNJS(316,prefinalNJS,344,finalNJS)
+const final_real_njs: ty.Effect<ty.BSBasicObject> = ef.setNJS(prefinalNJS)
+const final_groups: ty.Effect<ty.BSBasicObject> = eff.spawnGroups(0.8,2,316)
+const final_ef: ty.Effect<ty.BSBasicObject> = ef.combineEffects([interpolate_final_njs, final_groups])
 const fake_cr: ty.Creator<ty.NoteOrBomb> = eff.fakeEffect(final_ef)
 const final_hidden_ef: ty.Effect<remapper.Note> = ef.combineEffects([final_real_njs])
 fn.mapCreate(fake_cr)(final_notes)
@@ -148,7 +148,7 @@ fn.mapEffect(final_ef)(final_walls)
 
 const veryfinal_notes: remapper.Note[] = fn.filterObjects(allnotes, fl.beatFilter(344,500))
 const veryfinal_walls: remapper.Wall[] = fn.filterObjects(allwalls, fl.beatFilter(344,500))
-const veryfinal_njs: ty.Effect<ty.BSObject> = ef.setNJS(finalNJS)
+const veryfinal_njs: ty.Effect<ty.BSBasicObject> = ef.setNJS(finalNJS)
 fn.mapEffect(veryfinal_njs)(veryfinal_notes)
 fn.mapEffect(veryfinal_njs)(veryfinal_walls)
 

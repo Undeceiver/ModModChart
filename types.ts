@@ -1,8 +1,9 @@
 import * as remapper from "https://deno.land/x/remapper@3.1.1/src/mod.ts"; // MAKE SURE THIS IS ON THE LATEST REMAPPER VERSION!!!!!!!!!
 
 
-export type BSObject = remapper.Note | remapper.Bomb | remapper.Wall
+export type BSBasicObject = remapper.Note | remapper.Bomb | remapper.Wall
 export type NoteOrBomb = remapper.Note | remapper.Bomb
+export type BSObject = BSBasicObject | remapper.Chain
 
 export type CustomDataField =
 {

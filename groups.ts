@@ -1,5 +1,5 @@
 import * as remapper from "https://deno.land/x/remapper@3.1.1/src/mod.ts";
-import { Effect, Grouper, StringGrouper, NumberGrouper, GroupEffect, StringGroupEffect, NumberGroupEffect, BSObject } from "./types.ts";
+import { Effect, Grouper, StringGrouper, NumberGrouper, GroupEffect, StringGroupEffect, NumberGroupEffect, BSBasicObject } from "./types.ts";
 import { parameterizeEffect } from "./effects.ts";
 
 export function groupEffect<T,V>(grouper: Grouper<T,V>, effect: GroupEffect<T,V>): Effect<T>
@@ -11,7 +11,7 @@ export function groupEffect<T,V>(grouper: Grouper<T,V>, effect: GroupEffect<T,V>
         })
 }
 
-export function customDataGrouper<T extends BSObject, V>(groupName: string): Grouper<T,V>
+export function customDataGrouper<T extends BSBasicObject, V>(groupName: string): Grouper<T,V>
 {
     return function(t: T)
     {
@@ -19,7 +19,7 @@ export function customDataGrouper<T extends BSObject, V>(groupName: string): Gro
     }
 }
 
-export function timeGrouper<T extends BSObject>(frequency = 1, offset = 0): NumberGrouper<T>
+export function timeGrouper<T extends BSBasicObject>(frequency = 1, offset = 0): NumberGrouper<T>
 {
     return function(t: T)
     {

@@ -170,3 +170,76 @@ export function interpolateFunction(startIn: number, startOut: number, endIn: nu
         return startOut + (v-startIn)*(endOut-startOut)/(endIn-startIn)
     }
 }
+
+export function clampAngle(angle: number): number
+{
+    return ((angle % 360) + 360) % 360
+}
+
+// This is based on a base direction of 3 (right)
+// Returns the angle and the remainder.
+export function getClosestDirection(angle: number): [remapper.CUT, number]
+{
+    let anglem = clampAngle(angle)
+
+    if(anglem >= 0 && anglem < 22.5)
+    {
+        return [remapper.CUT.RIGHT,clampAngle(anglem-0)]
+    }
+    else if(anglem >= -22.5+45 && anglem < 22.5+45)
+    {
+        return [remapper.CUT.UP_RIGHT,clampAngle(anglem-45)]
+    }
+    else if(anglem >= -22.5+90 && anglem < 22.5+90)
+    {
+        return [remapper.CUT.UP,clampAngle(anglem-90)]
+    }
+    else if(anglem >= -22.5+135 && anglem < 22.5+135)
+    {
+        return [remapper.CUT.UP_LEFT,clampAngle(anglem-135)]
+    }
+    else if(anglem >= -22.5+180 && anglem < 22.5+180)
+    {
+        return [remapper.CUT.LEFT,clampAngle(anglem-180)]
+    }
+    else if(anglem >= -22.5+225 && anglem < 22.5+225)
+    {
+        return [remapper.CUT.DOWN_LEFT,clampAngle(anglem-225)]
+    }
+    else if(anglem >= -22.5+270 && anglem < 22.5+270)
+    {
+        return [remapper.CUT.DOWN,clampAngle(anglem-270)]
+    }
+    else if(anglem >= -22.5+315 && anglem < 22.5+315)
+    {
+        return [remapper.CUT.DOWN_RIGHT,clampAngle(anglem-315)]
+    }
+    else if(anglem >= 360-22.5 && anglem < 360)
+    {
+        return [remapper.CUT.RIGHT,clampAngle(anglem-0)]
+    }
+    else
+    {
+        console.log("IMPOSSIBLE ANGLE: " + anglem)
+        return [remapper.CUT.RIGHT,0]
+    }
+}
+
+// Returns x and y, both between -1 and 1
+export function getDiscreteDirectionVector(direction: remapper.CUT): [number, number]
+{
+    switch(direction)
+    {
+        case remapper.CUT.UP: return [0,1]
+        case remapper.CUT.DOWN: return [0,-1]
+        case remapper.CUT.LEFT: return [-1,0]
+        case remapper.CUT.RIGHT: return [1,0]
+        case remapper.CUT.UP_LEFT: return [-1,1]
+        case remapper.CUT.UP_RIGHT: return [1,1]
+        case remapper.CUT.DOWN_LEFT: return [-1,-1]
+        case remapper.CUT.DOWN_RIGHT: return [1,-1]
+        case remapper.CUT.DOT:
+            console.log("ARE YOU SURE THIS IS WHAT YOU WANT? DISCRETE DIRECTION OF A DOT?")
+            return [0,0]
+    }
+}

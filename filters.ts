@@ -1,4 +1,4 @@
-import { BSObject, Filter } from "./types.ts";
+import { BSBasicObject, BSObject, Filter } from "./types.ts";
 import * as remapper from "https://deno.land/x/remapper@3.1.1/src/mod.ts";
 
 /*
@@ -38,7 +38,7 @@ export function orFilter<T>(filters: Filter<T>[])
 */
 
 // Checks if the object has an entry in customData with label:-anyvalue-
-export function labelFilter<T extends remapper.Note | remapper.Bomb | remapper.Wall>(label:string): Filter<T>
+export function labelFilter<T extends BSObject>(label:string): Filter<T>
 {
     return function(t: T)
     {
@@ -46,7 +46,7 @@ export function labelFilter<T extends remapper.Note | remapper.Bomb | remapper.W
     }
 }
 
-export function groupFilter<T extends remapper.Note | remapper.Bomb | remapper.Wall>(groupName:string): Filter<T>
+export function groupFilter<T extends BSObject>(groupName:string): Filter<T>
 {
     return function(t: T)
     {
@@ -55,7 +55,7 @@ export function groupFilter<T extends remapper.Note | remapper.Bomb | remapper.W
 }
 
 // inclusive start, exclusive end
-export function beatFilter<T extends remapper.Note | remapper.Bomb | remapper.Wall>(start: number, end: number, startInclusive = true, endInclusive = false): Filter<T>
+export function beatFilter<T extends BSObject>(start: number, end: number, startInclusive = true, endInclusive = false): Filter<T>
 {
     return function(t: T)
     {

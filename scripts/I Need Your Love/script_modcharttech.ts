@@ -931,11 +931,11 @@ if(ismodcharttech())
     const befree_total_mult = 10
 
     const befree_init_position = ef.initializePosition()
-    const befree_hjd = ef.parameterizeEffect(function(t: ty.BSObject)
+    const befree_hjd = ef.parameterizeEffect(function(t: ty.BSBasicObject)
     {
         return ef.setHJD(t.time - befree_start)
     })
-    const befree_move = ef.parameterizeEffect(function(t: ty.BSObject)
+    const befree_move = ef.parameterizeEffect(function(t: ty.BSBasicObject)
     {
         const finalx = util.signedsqrt(t.position[0]+0.5)*befree_total_mult*(t.time-befree_start)/(befree_end-befree_start)
         const finaly = util.signedsqrt(t.position[1])*befree_total_mult*(t.time-befree_start)/(befree_end-befree_start)
