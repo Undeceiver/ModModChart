@@ -1,6 +1,5 @@
-import * as remapper from "https://deno.land/x/remapper@3.1.1/src/mod.ts";
+import * as remapper from "file:///F:/ReMapper/src/mod.ts";
 import { Effect, Creator, GroupEffect, NumberGroupEffect, BSBasicObject, CustomDataField, BSObject } from "./types.ts";
-import { LightRemapper } from "https://deno.land/x/remapper@3.1.1/src/light_remapper.ts";
 import { nothingGroupEffect } from "./groups.ts";
 import { createWithEffect, createWithIndividualEffect, getCustomDataField } from "./functions.ts";
 

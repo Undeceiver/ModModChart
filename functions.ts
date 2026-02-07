@@ -1,5 +1,6 @@
-import { NoteFilter, BombFilter, WallFilter, Filter, Effect, Creator, CustomDataField, BSBasicObject } from "./types.ts";
-import * as remapper from "https://deno.land/x/remapper@3.1.1/src/mod.ts";
+import { Note } from "../ReMapper/src/note.ts";
+import { NoteFilter, BombFilter, WallFilter, Filter, Effect, Creator, CustomDataField, BSBasicObject, NumberGroupEffect, NoteEffect } from "./types.ts";
+import * as remapper from "file:///F:/ReMapper/src/mod.ts";
 
 // These wrappers hardly do anything, so arguably they're unnecessary. Don't use them if you prefer to use ReMapper directly for this.
 export function selectAllNotes(): remapper.Note[]

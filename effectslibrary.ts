@@ -1,19 +1,32 @@
-import { Note } from "https://deno.land/x/remapper@3.1.1/src/note.ts";
 import { Effect, NoteEffect, BombEffect, WallEffect, BSBasicObject, NoteOrBomb, Creator, GroupEffect, NumberGroupEffect, TrackAnimationDefinition, InterpolatedEffect, TimePointPattern, PointTimeSamples, TimeSampler, TimeLinePattern, BSObject } from "./types.ts";
 import * as effects from "./effects.ts"
 import * as groups from "./groups.ts"
 import * as geometry from "./geometricpatterns.ts"
 import { constFunction, degreesToRadians, fromVanillaToNEX, fromVanillaToNEY, interpolateRotation, randomTrackName } from "./util.ts"
-import * as remapper from "https://deno.land/x/remapper@3.1.1/src/mod.ts";
+import * as remapper from "file:///F:/ReMapper/src/mod.ts";
 import * as util from "./util.ts"
 import { copyObject, createBombs, createNotes, createWalls, effectOnFake, noCreation, parameterizeCreation, parameterizeCreationByField } from "./creation.ts";
 import { createAndEffect, createWithEffect, customDataField, filterEffect, runVoidEffect } from "./functions.ts";
 import { noteTypeFilter } from "./filters.ts";
-import { HemisphereLight } from "https://cdn.skypack.dev/three?dts";
-import { timeSampler } from "./geometricpatterns.ts";
-import { combineEffects } from "./effects.ts";
 
 // This file is sorted alphabetically
+
+export function alternatingEffect<T extends BSBasicObject>(startTime: number, period: number, changeTime:number, effectBefore:Effect<T>, effectAfter:Effect<T>): Effect<T>
+{
+    const interpolatedEf = (start: number, end: number) => (time: number) => 
+    {
+        if(time < changeTime)
+        {
+            return effectBefore
+        }
+        else
+        {
+            return effectAfter
+        }
+    }
+
+    return periodicEffect(startTime,period,interpolatedEf)
+}
 
 export function assignPlayerToTrack(track: remapper.TrackValue): Effect<void>
 {
@@ -119,7 +132,7 @@ export function closingWall(startTime: number, startWidth: number, endTime: numb
 // Creates a tower in the same direction as a certain note, starting from it and in the same angle.
 // For this to work properly, use direction 3 (pointing right) and angle offset (vanilla).
 // Make sure to have initialized the position of the source note, as it only reads the precision position.
-export function createTower(nextra = 2, fake = false): Creator<Note>
+export function createTower(nextra = 2, fake = false): Creator<remapper.Note>
 {
     const notesize = 1.1
 
@@ -128,7 +141,7 @@ export function createTower(nextra = 2, fake = false): Creator<Note>
 
     //const jointef = combineEffects([nogravity,nolook])
     
-    const setDirectionEf = effects.parameterizeEffect(function(t: Note)
+    const setDirectionEf = effects.parameterizeEffect(function(t: remapper.Note)
     {
         const [dir,remainder] = util.getClosestDirection(t.angleOffset)    
         const setDirectionEf = effects.setDirection(dir)      
@@ -140,7 +153,7 @@ export function createTower(nextra = 2, fake = false): Creator<Note>
     //const jointef = effects.combineEffects([setDirectionEf,nogravity,nolook])
     const jointef = effects.combineEffects([setDirectionEf])
 
-    return createAndEffect(parameterizeCreation(function(note: Note)
+    return createAndEffect(parameterizeCreation(function(note: remapper.Note)
     {
         const [dir,remainder] = util.getClosestDirection(note.angleOffset)    
         const dirVec = util.getDiscreteDirectionVector(dir)
@@ -152,7 +165,7 @@ export function createTower(nextra = 2, fake = false): Creator<Note>
         const startX = note.x
         const startY = note.y
 
-        const groupEffect: NumberGroupEffect<Note> = function(v: number)
+        const groupEffect: NumberGroupEffect<remapper.Note> = function(v: number)
         {            
             const targetX = startPos[0] + notesize*(v+1)*Math.cos(angle)
             //console.log("cos:" + Math.cos(angle))
@@ -174,11 +187,21 @@ export function createTower(nextra = 2, fake = false): Creator<Note>
     }),jointef)
 }
 
-export function curveIn<T extends BSBasicObject>(startYaw: number, finalYaw = 0, finalTime = 0.5): Effect<T>
+export function curveIn<T extends BSBasicObject>(startYaw: number, finalYaw = 0, finalTime = 0.5, easing:remapper.EASE="easeInExpo"): Effect<T>
 {
-    const worldRotation: remapper.KeyframesVec3 = [[0,startYaw,0,0],[0,finalYaw,0,finalTime,"easeInExpo"]]
+    const worldRotation: remapper.KeyframesVec3 = [[0,startYaw,0,0],[0,finalYaw,0,finalTime,easing]]
 
     return effects.animateWorldRotation(worldRotation)
+}
+
+export function dissolveIn<T extends BSBasicObject>(startTime = 0, startDissolve = 0, endTime = 0.35, endDissolve = 1): NoteEffect
+{
+    const dissolve:remapper.KeyframesLinear = [[startDissolve,startTime],[endDissolve,endTime]]
+
+    const dissolveAnimation = effects.animateDissolve(dissolve)
+    const dissolveArrowAnimation = effects.animateDissolveArrow(dissolve)
+
+    return effects.combineEffects([dissolveAnimation,dissolveArrowAnimation])
 }
 
 // Must initialize position before
@@ -216,6 +239,25 @@ export function fakeEffect<T extends NoteOrBomb>(effect: Effect<T>): Creator<T>
         
         return created
     }
+}
+
+export function floatDown<T extends BSBasicObject>(dist: number, end: number, easing:remapper.KeyframeFlag="easeOutCirc"): Effect<T>
+{
+    const position: remapper.KeyframesVec3 = [[0,dist,0,0],[0,0,0,end,easing]]
+
+    return effects.animatePosition(position)
+}
+
+export function heartbeat<T extends BSBasicObject>(startProp = 0.1, endProp = 0.5, startScale = 0, endScale = 1.1): Effect<T>
+{
+    const sequence : remapper.KeyframesVec3 = [
+        [startScale,startScale,1,0],
+        [startScale,startScale,1,startProp],
+        [endScale,endScale,1,endProp,"easeOutElastic"],
+        [1,1,1,0.5,"easeOutCirc"]
+    ]
+
+    return effects.animateScale(sequence)
 }
 
 // freq is measured in beats, and it lasts for as long as the original wall lasts
@@ -355,12 +397,12 @@ export function openOrClose(startTime: number, endTime: number, startWidth = 0, 
 }
 
 // finalTime is a proportion of the spawn animation
-export function oscillateCurveIn<T extends BSBasicObject>(startTime: number, period: number, amplitude: number, finalYaw = 0, finalTime = 0.5): Effect<T>
+export function oscillateCurveIn<T extends BSBasicObject>(startTime: number, period: number, amplitude: number, finalYaw = 0, finalTime = 0.5, easing:remapper.EASE="easeInExpo"): Effect<T>
 {
     const groupEffect = 
         function(angle: number)
         {
-            return curveIn(angle,finalYaw,finalTime)
+            return curveIn(angle,finalYaw,finalTime,easing)
         }
 
     return oscillateEffect(startTime,period,amplitude,groupEffect)
@@ -521,9 +563,32 @@ export function randomRotate<T extends BSBasicObject>(minPitch: number, maxPitch
 }
 
 // end is a proportion of the spawn animation
-export function slideIn<T extends BSBasicObject>(dist: number, end: number): Effect<T>
+export function rollIn<T extends BSBasicObject>(extraHJD: number, end:number = 0.5, easing:remapper.KeyframeFlag="easeOutQuad"): Effect<T>
 {
-    const position: remapper.KeyframesVec3 = [[dist,0,0,0],[0,0,0,end]]
+    const hjdEf = effects.addHJD(extraHJD)    
+    return effects.parameterizeEffect(
+        (object: BSBasicObject) =>
+        {            
+            const njs = object.NJS
+            const dist = njs*extraHJD
+            const position: remapper.KeyframesVec3 = [[0,0,-dist,0],[0,0,0,end,easing]]
+
+            const animateEf = effects.animatePosition(position)
+            return effects.combineEffects([animateEf,hjdEf])
+        }
+    )    
+}
+
+export function rollGroupsIn<T extends BSBasicObject>(beatsPerBeat = 0.8, frequency = 1, offset = 0, rollInEnd = 0.5, easing:remapper.KeyframeFlag="easeOutQuad"): Effect<T>
+{    
+    const fn = function(time: number): Effect<T> { return rollIn(time*beatsPerBeat, rollInEnd, easing) }
+    return groups.groupEffect(groups.timeGrouper(frequency,offset),fn)
+}
+
+// end is a proportion of the spawn animation
+export function slideIn<T extends BSBasicObject>(dist: number, end: number, easing:remapper.KeyframeFlag="easeLinear"): Effect<T>
+{
+    const position: remapper.KeyframesVec3 = [[dist,0,0,0],[0,0,0,end,easing]]
 
     return effects.animatePosition(position)
 }
@@ -563,6 +628,15 @@ export function surge(stump = 0.4, duration = 0.75): Effect<remapper.Wall>
     }
 
     return effects.parameterizeEffectByCustomData(customDataField("surge"),parametricEffect)
+}
+
+// Value should be the value for right hand notes.
+export function symmetricNoteEffect(effect: NumberGroupEffect<remapper.Note>, value: number): NoteEffect
+{
+    const leftEffect = effect(-value)
+    const rightEffect = effect(value)
+
+    return filterEffect(noteTypeFilter(remapper.NOTETYPE.RED),leftEffect,rightEffect)
 }
 
 // Make sure animation exists

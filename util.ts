@@ -1,5 +1,4 @@
-import { TrackValue, complexifyArray } from "https://deno.land/x/remapper@3.1.1/src/animation.ts";
-import * as remapper from "https://deno.land/x/remapper@3.1.1/src/mod.ts";
+import * as remapper from "file:///F:/ReMapper/src/mod.ts";
 
 export function fromVanillaToNEX(x: number)
 {
@@ -39,7 +38,7 @@ export function beatsToTrackAnimationPLinear(duration: number): ((keyframes: rem
         }
         else
         {
-            const keyframes2 = complexifyArray(keyframes)
+            const keyframes2 = remapper.complexifyArray(keyframes)
             return keyframes2.map(keyframe =>
                 keyframe.map((x: number | any, i) =>
                     (i == 1 && typeof x === "number") ? beatsToTrackAnimationP(duration)(x) : x)) as remapper.KeyframesLinear
@@ -57,7 +56,7 @@ export function beatsToTrackAnimationPVec3(duration: number): ((keyframes: remap
         }
         else
         {
-            const keyframes2 = complexifyArray(keyframes)
+            const keyframes2 = remapper.complexifyArray(keyframes)
             return keyframes2.map(keyframe =>
                 keyframe.map((x: number | any, i) =>
                     (i == 3 && typeof x === "number") ? beatsToTrackAnimationP(duration)(x) : x)) as remapper.KeyframesVec3        

@@ -1,4 +1,4 @@
-import * as remapper from "https://deno.land/x/remapper@3.1.1/src/mod.ts"; // MAKE SURE THIS IS ON THE LATEST REMAPPER VERSION!!!!!!!!!
+import * as remapper from "file:///F:/ReMapper/src/mod.ts"; // MAKE SURE THIS IS ON THE LATEST REMAPPER VERSION!!!!!!!!!
 
 
 export type BSBasicObject = remapper.Note | remapper.Bomb | remapper.Wall

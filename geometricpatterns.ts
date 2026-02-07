@@ -1,12 +1,12 @@
-import * as remapper from "https://deno.land/x/remapper@3.1.1/src/mod.ts";
+import * as remapper from "file:///F:/ReMapper/src/mod.ts";
 import { BSBasicObject, Creator, LinePattern, LineSampler, NumberGroupEffect, PointTimeSamples, SurfacePattern, SurfaceSampler, TimeLinePattern, TimePattern, TimePointPattern, TimePointPatternDefinition, TimeSampler, TimeSamples, TimeSurfacePattern } from "./types.ts";
 import { periodicEffect } from "./effectslibrary.ts";
-import { Bomb } from "https://deno.land/x/remapper@3.1.1/src/note.ts";
+import { Bomb } from "file:///F:/ReMapper/src/note.ts";
 import { combineEffects, disableNoteGravity, initializePosition, initializeScale, setDuration, setPosition, setScale, setTime } from "./effects.ts";
 import { createBombs, createWalls } from "./creation.ts";
-import { EASE } from "https://deno.land/x/remapper@3.1.1/src/constants.ts";
-import { easeInBack } from "https://deno.land/x/remapper@3.1.1/src/easings.ts";
-import { lerp } from "https://deno.land/x/remapper@3.1.1/src/general.ts";
+import { EASE } from "file:///F:/ReMapper/src/constants.ts";
+import { easeInBack } from "file:///F:/ReMapper/src/easings.ts";
+import { lerp } from "file:///F:/ReMapper/src/general.ts";
 
 export function basicLineSampler(n: number): LineSampler
 {

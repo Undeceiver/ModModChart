@@ -1,4 +1,4 @@
-import * as remapper from "https://deno.land/x/remapper@3.1.1/src/mod.ts";
+import * as remapper from "file:///F:/ReMapper/src/mod.ts";
 import { Effect, Grouper, StringGrouper, NumberGrouper, GroupEffect, StringGroupEffect, NumberGroupEffect, BSBasicObject } from "./types.ts";
 import { parameterizeEffect } from "./effects.ts";
 

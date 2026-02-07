@@ -1,10 +1,10 @@
 import { Effect, NoteEffect, BombEffect, WallEffect, BSBasicObject, CustomDataField, TrackAnimation, TrackAnimationDefinition, BSObject } from "./types.ts";
-import * as remapper from "https://deno.land/x/remapper@3.1.1/src/mod.ts";
+import * as remapper from "file:///F:/ReMapper/src/mod.ts";
 import * as util from "./util.ts"
 import { mapEffect } from "./functions.ts";
 import { getCustomDataField } from "./functions.ts";
-import { Note } from "https://deno.land/x/remapper@3.1.1/src/note.ts";
-import { NOTETYPE } from "https://deno.land/x/remapper@3.1.1/src/constants.ts";
+import { Note } from "file:///F:/ReMapper/src/note.ts";
+import { NOTETYPE } from "file:///F:/ReMapper/src/constants.ts";
 
 export function noEffect<T>(): Effect<T>
 {
