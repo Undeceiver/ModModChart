@@ -1,4 +1,4 @@
-import * as remapper from "file:///F:/ReMapper/src/mod.ts";
+import * as remapper from "https://deno.land/x/remapper@4.2.3/src/mod.ts";
 
 export function fromVanillaToNEX(x: number)
 {
@@ -28,9 +28,10 @@ export function beatsToTrackAnimationP(duration: number): ((beats: number) => nu
     }
 }
 
-export function beatsToTrackAnimationPLinear(duration: number): ((keyframes: remapper.KeyframesLinear) => remapper.KeyframesLinear)
+// Commenting out for now, may reuse later or just delete
+export function beatsToTrackAnimationPLinear(duration: number): ((keyframes: remapper.ComplexPointsLinear) => remapper.ComplexPointsLinear)
 {
-    return function(keyframes: remapper.KeyframesLinear)
+    return function(keyframes: remapper.ComplexPointsLinear)
     {      
         if(typeof keyframes === "string")
         {
@@ -38,17 +39,17 @@ export function beatsToTrackAnimationPLinear(duration: number): ((keyframes: rem
         }
         else
         {
-            const keyframes2 = remapper.complexifyArray(keyframes)
+            const keyframes2 = remapper.complexifyPoints(keyframes)
             return keyframes2.map(keyframe =>
                 keyframe.map((x: number | any, i) =>
-                    (i == 1 && typeof x === "number") ? beatsToTrackAnimationP(duration)(x) : x)) as remapper.KeyframesLinear
+                    (i == 1 && typeof x === "number") ? beatsToTrackAnimationP(duration)(x) : x)) as remapper.ComplexPointsLinear
         }        
     }
 }
 
-export function beatsToTrackAnimationPVec3(duration: number): ((keyframes: remapper.KeyframesVec3) => remapper.KeyframesVec3)
+export function beatsToTrackAnimationPVec3(duration: number): ((keyframes: remapper.ComplexPointsVec3) => remapper.ComplexPointsVec3)
 {
-    return function(keyframes: remapper.KeyframesVec3)
+    return function(keyframes: remapper.ComplexPointsVec3)
     {      
         if(typeof keyframes === "string")
         {
@@ -56,10 +57,10 @@ export function beatsToTrackAnimationPVec3(duration: number): ((keyframes: remap
         }
         else
         {
-            const keyframes2 = remapper.complexifyArray(keyframes)
+            const keyframes2 = remapper.complexifyPoints(keyframes)
             return keyframes2.map(keyframe =>
                 keyframe.map((x: number | any, i) =>
-                    (i == 3 && typeof x === "number") ? beatsToTrackAnimationP(duration)(x) : x)) as remapper.KeyframesVec3        
+                    (i == 3 && typeof x === "number") ? beatsToTrackAnimationP(duration)(x) : x)) as remapper.ComplexPointsVec3        
         }        
     }
 }
@@ -101,9 +102,9 @@ export function signedsqrt(number: number): number
 }
 
 // Note that this will ignore/lose individual easings on steps that need splitting
-export function interpolateRotation(rotation: remapper.KeyframesVec3, maxEach = 90): remapper.KeyframesVec3
+export function interpolateRotation(rotation: remapper.ComplexPointsVec3, maxEach = 90): remapper.ComplexPointsVec3
 {
-    const result : remapper.KeyframesVec3 = []
+    const result : remapper.ComplexPointsVec3 = []
 
     const prevRotation: [number,number,number,number] = rotation[0] as [number,number,number,number]
     const prevPitch = prevRotation[0]
@@ -153,8 +154,8 @@ export function interpolateRotation(rotation: remapper.KeyframesVec3, maxEach = 
 }
 
 export function getWallReachProp(wall: remapper.Wall): number
-{
-    return wall.halfJumpDur/(wall.halfJumpDur+wall.duration)
+{    
+    return wall.halfJumpDuration/(wall.halfJumpDuration+wall.duration)
 }
 
 export function constFunction<A, B>(b : B): ((a: A) => B)
@@ -177,67 +178,67 @@ export function clampAngle(angle: number): number
 
 // This is based on a base direction of 3 (right)
 // Returns the angle and the remainder.
-export function getClosestDirection(angle: number): [remapper.CUT, number]
+export function getClosestDirection(angle: number): [remapper.NoteCut, number]
 {
     let anglem = clampAngle(angle)
 
     if(anglem >= 0 && anglem < 22.5)
     {
-        return [remapper.CUT.RIGHT,clampAngle(anglem-0)]
+        return [remapper.NoteCut.RIGHT,clampAngle(anglem-0)]
     }
     else if(anglem >= -22.5+45 && anglem < 22.5+45)
     {
-        return [remapper.CUT.UP_RIGHT,clampAngle(anglem-45)]
+        return [remapper.NoteCut.UP_RIGHT,clampAngle(anglem-45)]
     }
     else if(anglem >= -22.5+90 && anglem < 22.5+90)
     {
-        return [remapper.CUT.UP,clampAngle(anglem-90)]
+        return [remapper.NoteCut.UP,clampAngle(anglem-90)]
     }
     else if(anglem >= -22.5+135 && anglem < 22.5+135)
     {
-        return [remapper.CUT.UP_LEFT,clampAngle(anglem-135)]
+        return [remapper.NoteCut.UP_LEFT,clampAngle(anglem-135)]
     }
     else if(anglem >= -22.5+180 && anglem < 22.5+180)
     {
-        return [remapper.CUT.LEFT,clampAngle(anglem-180)]
+        return [remapper.NoteCut.LEFT,clampAngle(anglem-180)]
     }
     else if(anglem >= -22.5+225 && anglem < 22.5+225)
     {
-        return [remapper.CUT.DOWN_LEFT,clampAngle(anglem-225)]
+        return [remapper.NoteCut.DOWN_LEFT,clampAngle(anglem-225)]
     }
     else if(anglem >= -22.5+270 && anglem < 22.5+270)
     {
-        return [remapper.CUT.DOWN,clampAngle(anglem-270)]
+        return [remapper.NoteCut.DOWN,clampAngle(anglem-270)]
     }
     else if(anglem >= -22.5+315 && anglem < 22.5+315)
     {
-        return [remapper.CUT.DOWN_RIGHT,clampAngle(anglem-315)]
+        return [remapper.NoteCut.DOWN_RIGHT,clampAngle(anglem-315)]
     }
     else if(anglem >= 360-22.5 && anglem < 360)
     {
-        return [remapper.CUT.RIGHT,clampAngle(anglem-0)]
+        return [remapper.NoteCut.RIGHT,clampAngle(anglem-0)]
     }
     else
     {
         console.log("IMPOSSIBLE ANGLE: " + anglem)
-        return [remapper.CUT.RIGHT,0]
+        return [remapper.NoteCut.RIGHT,0]
     }
 }
 
 // Returns x and y, both between -1 and 1
-export function getDiscreteDirectionVector(direction: remapper.CUT): [number, number]
+export function getDiscreteDirectionVector(direction: remapper.NoteCut): [number, number]
 {
     switch(direction)
     {
-        case remapper.CUT.UP: return [0,1]
-        case remapper.CUT.DOWN: return [0,-1]
-        case remapper.CUT.LEFT: return [-1,0]
-        case remapper.CUT.RIGHT: return [1,0]
-        case remapper.CUT.UP_LEFT: return [-1,1]
-        case remapper.CUT.UP_RIGHT: return [1,1]
-        case remapper.CUT.DOWN_LEFT: return [-1,-1]
-        case remapper.CUT.DOWN_RIGHT: return [1,-1]
-        case remapper.CUT.DOT:
+        case remapper.NoteCut.UP: return [0,1]
+        case remapper.NoteCut.DOWN: return [0,-1]
+        case remapper.NoteCut.LEFT: return [-1,0]
+        case remapper.NoteCut.RIGHT: return [1,0]
+        case remapper.NoteCut.UP_LEFT: return [-1,1]
+        case remapper.NoteCut.UP_RIGHT: return [1,1]
+        case remapper.NoteCut.DOWN_LEFT: return [-1,-1]
+        case remapper.NoteCut.DOWN_RIGHT: return [1,-1]
+        case remapper.NoteCut.DOT:
             console.log("ARE YOU SURE THIS IS WHAT YOU WANT? DISCRETE DIRECTION OF A DOT?")
             return [0,0]
     }

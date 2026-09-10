@@ -1,8 +1,7 @@
-import * as remapper from "file:///F:/ReMapper/src/mod.ts"; // MAKE SURE THIS IS ON THE LATEST REMAPPER VERSION!!!!!!!!!
+import * as remapper from "https://deno.land/x/remapper@4.2.3/src/mod.ts";
 
-
-export type BSBasicObject = remapper.Note | remapper.Bomb | remapper.Wall
-export type NoteOrBomb = remapper.Note | remapper.Bomb
+export type BSBasicObject = remapper.ColorNote | remapper.Bomb | remapper.Wall
+export type NoteOrBomb = remapper.ColorNote | remapper.Bomb
 export type BSObject = BSBasicObject | remapper.Chain
 
 export type CustomDataField =
@@ -16,7 +15,7 @@ export type CustomDataField =
 */
 export type Filter<T> = ((t: T) => boolean)
 
-export type NoteFilter = Filter<remapper.Note>
+export type NoteFilter = Filter<remapper.ColorNote>
 export type BombFilter = Filter<remapper.Bomb>
 export type WallFilter = Filter<remapper.Wall>
 
@@ -25,7 +24,7 @@ export type WallFilter = Filter<remapper.Wall>
 */
 export type Effect<T> = ((t: T) => void)
 
-export type NoteEffect = Effect<remapper.Note>
+export type NoteEffect = Effect<remapper.ColorNote>
 export type BombEffect = Effect<remapper.Bomb>
 export type WallEffect = Effect<remapper.Wall>
 
@@ -54,7 +53,8 @@ export type Creator<T> = ((t:T) => T[])
 * Track animations
 */
 export type TrackAnimation = ((time: number) => Effect<remapper.TrackValue>)
-export type TrackAnimationDefinition = ((duration: number, event:remapper.AnimationInternals.AbstractAnimation) => void)
+// Can't remember what this was for, comment out for now until I find out.
+//export type TrackAnimationDefinition = ((duration: number, event:remapper.AnimationInternals.AbstractAnimation) => void)
 
 /*
 * Geometric patterns, for an individual point in time.
