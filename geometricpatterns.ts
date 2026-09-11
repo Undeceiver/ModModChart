@@ -1,8 +1,8 @@
 import * as remapper from "https://deno.land/x/remapper@4.2.3/src/mod.ts";
 import { BSBasicObject, CreatorV3, LinePattern, LineSampler, NumberGroupEffect, PointTimeSamples, SurfacePattern, SurfaceSampler, TimeLinePattern, TimePattern, TimePointPattern, TimePointPatternDefinition, TimeSampler, TimeSamples, TimeSurfacePattern } from "./types.ts";
 import { periodicEffect } from "./effectslibrary.ts";
-import { combineEffects, disableNoteGravity, initializePosition, initializeScale, setDuration, setPosition, setScale, setTime } from "./effects.ts";
-import { createBombs, createWalls } from "./creation.ts";
+import { combineEffects, disableNoteGravity, initializePosition, initializeScale, setDuration, setCoordinates, setScale, setBeat } from "./effects.ts";
+import { createBombsV3, createWallsV3 } from "./creation.ts";
 
 export function basicLineSampler(n: number): LineSampler
 {
@@ -147,30 +147,30 @@ export function sampleTimeSurfacePattern(pattern: TimeSurfacePattern, surfaceSam
     return result
 }
 
-export function placeBombs(points: [number,remapper.Vec2][], fake = false): Creator<remapper.Bomb>
+export function placeBombs(points: [number,remapper.Vec2][], fake = false): CreatorV3<remapper.Bomb>
 {
     const groupEffect: NumberGroupEffect<remapper.Bomb> =
         function(i: number)
         {
             const initPos = initializePosition()
-            const setPos = setPosition(points[i][1])
-            const setTimeEf = setTime(points[i][0])
+            const setPos = setCoordinates(points[i][1])
+            const setTimeEf = setBeat(points[i][0])
             const nogravity = disableNoteGravity()
             
             return combineEffects([initPos,setPos,setTimeEf,nogravity])
         }
     
-    return createBombs(points.length, groupEffect, fake)
+    return createBombsV3(points.length, groupEffect, fake)
 }
 
-export function placeWalls(points: [number,remapper.Vec2][], wallDist: number, wallSide: number, fake = false): Creator<remapper.Wall>
+export function placeWalls(points: [number,remapper.Vec2][], wallDist: number, wallSide: number, fake = false): CreatorV3<remapper.Wall>
 {
     const groupEffect: NumberGroupEffect<remapper.Wall> =
         function(i: number)
         {
             const initPos = initializePosition()
-            const setPos = setPosition(points[i][1])
-            const setTimeEf = setTime(points[i][0])
+            const setPos = setCoordinates(points[i][1])
+            const setTimeEf = setBeat(points[i][0])
             const setDurationEf = setDuration(wallDist)
             const initScale = initializeScale()
             const setScaleEf = setScale([wallSide,wallSide,wallSide])                       
@@ -178,14 +178,14 @@ export function placeWalls(points: [number,remapper.Vec2][], wallDist: number, w
             return combineEffects([initPos,setPos,setTimeEf,setDurationEf,initScale,setScaleEf])
         }
     
-    return createWalls(points.length, groupEffect, fake)
+    return createWallsV3(points.length, groupEffect, fake)
 }
 
 // Some notes about this:
 // - To change easing, use two separate paths
 // - Note that the interpolation of the angle happens in the direction indicated by the signs.
 // - This can be used to change direction or do multiple loops.
-export function drawPath(keyframes: TimePointPatternDefinition, angleEasing: EASE = "easeLinear", radiusEasing: EASE = "easeLinear", positionEasing: EASE = "easeLinear"): TimePointPattern
+export function drawPath(keyframes: TimePointPatternDefinition, angleEasing: remapper.EASE = "easeLinear", radiusEasing: remapper.EASE = "easeLinear", positionEasing: remapper.EASE = "easeLinear"): TimePointPattern
 {
     const sections: [number,TimePointPattern][] = []
 
@@ -221,12 +221,12 @@ export function drawPath(keyframes: TimePointPatternDefinition, angleEasing: EAS
             //console.log("nextXOffset" + nextXOffset)
             //console.log("nextYOffset:" + nextYOffset)
 
-            const prop = (time - prevTimeStored)/(nextTime - prevTimeStored)
-            const curAngle = lerp(prevAngleStored,nextAngle,prop,angleEasing)
-            const curXRadius = lerp(prevXRadiusStored,nextXRadius,prop,radiusEasing)
-            const curYRadius = lerp(prevYRadiusStored,nextYRadius,prop,radiusEasing)
-            const curXOffset = lerp(prevXOffsetStored,nextXOffset,prop,positionEasing)
-            const curYOffset = lerp(prevYOffsetStored,nextYOffset,prop,positionEasing)
+            const prop = (time - prevTimeStored)/(nextTime - prevTimeStored)            
+            const curAngle = remapper.lerp(prevAngleStored,nextAngle,prop,angleEasing)
+            const curXRadius = remapper.lerp(prevXRadiusStored,nextXRadius,prop,radiusEasing)
+            const curYRadius = remapper.lerp(prevYRadiusStored,nextYRadius,prop,radiusEasing)
+            const curXOffset = remapper.lerp(prevXOffsetStored,nextXOffset,prop,positionEasing)
+            const curYOffset = remapper.lerp(prevYOffsetStored,nextYOffset,prop,positionEasing)
 
             //console.log("prevTimeStored:"+prevTimeStored)
 

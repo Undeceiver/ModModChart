@@ -1,13 +1,13 @@
-import { Effect, NoteEffect, BombEffect, WallEffect, BSBasicObject, NoteOrBomb, Creator, GroupEffect, NumberGroupEffect, TrackAnimationDefinition, InterpolatedEffect, TimePointPattern, PointTimeSamples, TimeSampler, TimeLinePattern, BSObject } from "./types.ts";
+import { Effect, NoteEffect, BombEffect, WallEffect, BSBasicObject, NoteOrBomb, CreatorV3, GroupEffect, NumberGroupEffect, TrackAnimationDefinition, InterpolatedEffect, TimePointPattern, PointTimeSamples, TimeSampler, TimeLinePattern, BSObject } from "./types.ts";
 import * as effects from "./effects.ts"
 import * as groups from "./groups.ts"
 import * as geometry from "./geometricpatterns.ts"
 import { constFunction, degreesToRadians, fromVanillaToNEX, fromVanillaToNEY, interpolateRotation, randomTrackName } from "./util.ts"
-import * as remapper from "file:///F:/ReMapper/src/mod.ts";
+import * as remapper from "https://deno.land/x/remapper@4.2.3/src/mod.ts";
 import * as util from "./util.ts"
-import { copyObject, createBombs, createNotes, createWalls, effectOnFake, noCreation, parameterizeCreation, parameterizeCreationByField } from "./creation.ts";
-import { createAndEffect, createWithEffect, customDataField, filterEffect, runVoidEffect } from "./functions.ts";
-import { noteTypeFilter } from "./filters.ts";
+import { copyObjectV3, createBombsV3, createNotesV3, createWallsV3, effectOnFakeV3, noCreationV3, parameterizeCreationV3, parameterizeCreationByFieldV3 } from "./creation.ts";
+import { createAndEffectV3, createWithEffectV3, customDataField, filterEffect, runVoidEffect } from "./functions.ts";
+import { noteColorFilter } from "./filters.ts";
 
 // This file is sorted alphabetically
 
@@ -28,16 +28,20 @@ export function alternatingEffect<T extends BSBasicObject>(startTime: number, pe
     return periodicEffect(startTime,period,interpolatedEf)
 }
 
-export function assignPlayerToTrack(track: remapper.TrackValue): Effect<void>
+export function assignPlayerToTrackV3(map: remapper.V3Difficulty, track: remapper.TrackValue): Effect<void>
 {
     return function()
     {
-        new remapper.CustomEvent().assignPlayerToTrack("player").push();
+        remapper.assignPlayerToTrack(map,
+            {
+                "beat":0,
+                "track":track[0]
+            })        
     }
 }
 
 // Will override dissolve and dissolve arrow, so if you have functions for those, do this manually / some other way.
-export function autoVanish(threshold = 0.505): Effect<remapper.Note | remapper.Bomb | remapper.Chain>
+export function autoVanish(threshold = 0.505): Effect<remapper.ColorNote | remapper.Bomb | remapper.Chain>
 {
     const dissolve = effects.animateDissolve([[1,0],[1,0.5],[0,threshold]])
     const dissolveArrow = effects.animateDissolveArrow([[1,0],[1,0.5],[0,threshold]])
@@ -91,7 +95,7 @@ export function bombSpiral(startTime: number, endTime: number, startAngle: numbe
     return geometry.sampleTime(pattern,sampler,startTime,endTime)
 }
 
-export function bombSpiralPlace(startTime: number, endTime: number, startAngle: number, period: number, direction: number, bombDist = 0.125, xradius = 2, yradius = 1.5, xoffset = 0, yoffset = 1.25, fake = false): Creator<remapper.Bomb>
+export function bombSpiralPlace(startTime: number, endTime: number, startAngle: number, period: number, direction: number, bombDist = 0.125, xradius = 2, yradius = 1.5, xoffset = 0, yoffset = 1.25, fake = false): CreatorV3<remapper.Bomb>
 {
     const samples = bombSpiral(startTime,endTime,startAngle,period,direction,bombDist,xradius,yradius,xoffset,yoffset)
 
@@ -113,15 +117,15 @@ export function closingWall(startTime: number, startWidth: number, endTime: numb
             return effects.parameterizeEffect(
                 function(wall: remapper.Wall)
                 {
-                    const width_ef = effects.setScale([wallWidth,wall.height,wall.duration*wall.NJS])
+                    const width_ef = effects.setScale([wallWidth,wall.height,wall.duration*wall.implicitNoteJumpMovementSpeed])
                     let pos_ef
                     if(wall.x < 0)
                     {
-                        pos_ef = effects.setPosition([-width,wall.y])
+                        pos_ef = effects.setCoordinates([-width,wall.y])
                     }
                     else
                     {
-                        pos_ef = effects.setPosition([width-wallWidth,wall.y])
+                        pos_ef = effects.setCoordinates([width-wallWidth,wall.y])
                     }
 
                     return effects.combineEffects([pos_ef,width_ef])
@@ -132,7 +136,7 @@ export function closingWall(startTime: number, startWidth: number, endTime: numb
 // Creates a tower in the same direction as a certain note, starting from it and in the same angle.
 // For this to work properly, use direction 3 (pointing right) and angle offset (vanilla).
 // Make sure to have initialized the position of the source note, as it only reads the precision position.
-export function createTower(nextra = 2, fake = false): Creator<remapper.Note>
+export function createTower(nextra = 2, fake = false): CreatorV3<remapper.ColorNote>
 {
     const notesize = 1.1
 
@@ -141,10 +145,10 @@ export function createTower(nextra = 2, fake = false): Creator<remapper.Note>
 
     //const jointef = combineEffects([nogravity,nolook])
     
-    const setDirectionEf = effects.parameterizeEffect(function(t: remapper.Note)
+    const setDirectionEf = effects.parameterizeEffect(function(t: remapper.ColorNote)
     {
         const [dir,remainder] = util.getClosestDirection(t.angleOffset)    
-        const setDirectionEf = effects.setDirection(dir)      
+        const setDirectionEf = effects.setCutDirection(dir)      
         const setAngleEf = effects.setAngle(remainder)
 
         return effects.combineEffects([setDirectionEf,setAngleEf])
@@ -153,19 +157,19 @@ export function createTower(nextra = 2, fake = false): Creator<remapper.Note>
     //const jointef = effects.combineEffects([setDirectionEf,nogravity,nolook])
     const jointef = effects.combineEffects([setDirectionEf])
 
-    return createAndEffect(parameterizeCreation(function(note: remapper.Note)
+    return createAndEffectV3(parameterizeCreationV3(function(note: remapper.ColorNote)
     {
         const [dir,remainder] = util.getClosestDirection(note.angleOffset)    
         const dirVec = util.getDiscreteDirectionVector(dir)
 
         const angle = degreesToRadians(note.angleOffset)
         //console.log("angle:"+angle)
-        const startPos = note.position
+        const startPos = note.coordinates ?? [0,0]
         //console.log("startPos:"+startPos)
         const startX = note.x
         const startY = note.y
 
-        const groupEffect: NumberGroupEffect<remapper.Note> = function(v: number)
+        const groupEffect: NumberGroupEffect<remapper.ColorNote> = function(v: number)
         {            
             const targetX = startPos[0] + notesize*(v+1)*Math.cos(angle)
             //console.log("cos:" + Math.cos(angle))
@@ -176,27 +180,27 @@ export function createTower(nextra = 2, fake = false): Creator<remapper.Note>
 
             const targetPos = [targetX,targetY] as remapper.Vec2
 
-            const setPos = effects.setPosition(targetPos)
+            const setPos = effects.setCoordinates(targetPos)
             const setX = effects.setX(startX+(v+1)*dirVec[0])           
             const setY = effects.setY(startY+(v+1)*dirVec[1])
 
             return effects.combineEffects([setPos,setX,setY,jointef])
         }       
 
-        return copyObject(nextra,groupEffect,fake)
+        return copyObjectV3(nextra,groupEffect,fake)
     }),jointef)
 }
 
 export function curveIn<T extends BSBasicObject>(startYaw: number, finalYaw = 0, finalTime = 0.5, easing:remapper.EASE="easeInExpo"): Effect<T>
 {
-    const worldRotation: remapper.KeyframesVec3 = [[0,startYaw,0,0],[0,finalYaw,0,finalTime,easing]]
+    const worldRotation: remapper.ComplexPointsVec3 = [[0,startYaw,0,0],[0,finalYaw,0,finalTime,easing]]
 
     return effects.animateWorldRotation(worldRotation)
 }
 
 export function dissolveIn<T extends BSBasicObject>(startTime = 0, startDissolve = 0, endTime = 0.35, endDissolve = 1): NoteEffect
 {
-    const dissolve:remapper.KeyframesLinear = [[startDissolve,startTime],[endDissolve,endTime]]
+    const dissolve:remapper.ComplexPointsLinear = [[startDissolve,startTime],[endDissolve,endTime]]
 
     const dissolveAnimation = effects.animateDissolve(dissolve)
     const dissolveArrowAnimation = effects.animateDissolveArrow(dissolve)
@@ -212,25 +216,25 @@ export function easyDodge(move = 0.25): Effect<remapper.Wall>
         {
             if(wall.x >= 2 && wall.x < 3)
             {
-                return effects.addPosition([move,0])
+                return effects.addCoordinates([move,0])
             }
             else if(wall.x + wall.width <= 2 && wall.x + wall.width > 1)
             {
-                return effects.addPosition([-move,0])
+                return effects.addCoordinates([-move,0])
             }
             else
             {
-                return effects.addPosition([0,0])
+                return effects.addCoordinates([0,0])
             }
         })
 }
 
 // Create fake copies, apply the effect on them, and then make the original ones invisible.
-export function fakeEffect<T extends NoteOrBomb>(effect: Effect<T>): Creator<T>
+export function fakeEffect<T extends NoteOrBomb>(effect: Effect<T>): CreatorV3<T>
 {
     const invisible_ef = invisible()    
 
-    const creator = effectOnFake(effect)
+    const creator = effectOnFakeV3(effect)
 
     return function(t: T)
     {
@@ -241,16 +245,16 @@ export function fakeEffect<T extends NoteOrBomb>(effect: Effect<T>): Creator<T>
     }
 }
 
-export function floatDown<T extends BSBasicObject>(dist: number, end: number, easing:remapper.KeyframeFlag="easeOutCirc"): Effect<T>
+export function floatDown<T extends BSBasicObject>(dist: number, end: number, easing:remapper.EASE="easeOutCirc"): Effect<T>
 {
-    const position: remapper.KeyframesVec3 = [[0,dist,0,0],[0,0,0,end,easing]]
+    const position: remapper.ComplexPointsVec3 = [[0,dist,0,0],[0,0,0,end,easing]]
 
     return effects.animatePosition(position)
 }
 
 export function heartbeat<T extends BSBasicObject>(startProp = 0.1, endProp = 0.5, startScale = 0, endScale = 1.1): Effect<T>
 {
-    const sequence : remapper.KeyframesVec3 = [
+    const sequence : remapper.ComplexPointsVec3 = [
         [startScale,startScale,1,0],
         [startScale,startScale,1,startProp],
         [endScale,endScale,1,endProp,"easeOutElastic"],
@@ -262,12 +266,12 @@ export function heartbeat<T extends BSBasicObject>(startProp = 0.1, endProp = 0.
 
 // freq is measured in beats, and it lasts for as long as the original wall lasts
 // total is measured in lanes
-export function increasingWall(dir: number, freq = 0.1, total = 0.25): Creator<remapper.Wall>
+export function increasingWall(dir: number, freq = 0.1, total = 0.25): CreatorV3<remapper.Wall>
 {    
     //console.log("Creating increasing wall with dir:" + dir)        
 
-    return parameterizeCreation(
-        function(wall: remapper.Wall): Creator<remapper.Wall>
+    return parameterizeCreationV3(
+        function(wall: remapper.Wall): CreatorV3<remapper.Wall>
         {
             const n = wall.duration/freq
 
@@ -280,8 +284,8 @@ export function increasingWall(dir: number, freq = 0.1, total = 0.25): Creator<r
                 const i = v+1
                 const initpos = effects.initializePosition()
                 const peri = total*i
-                const displace: Effect<remapper.Wall> = effects.addPosition([dir*peri/n,0])
-                const displaceTime: Effect<remapper.Wall> = effects.addTime(i*freq)
+                const displace: Effect<remapper.Wall> = effects.addCoordinates([dir*peri/n,0])
+                const displaceTime: Effect<remapper.Wall> = effects.addBeat(i*freq)
                 const reduceDur: Effect<remapper.Wall> = effects.setDuration(freq)
 
                 return effects.combineEffects([initpos,displace,reduceDur,displaceTime])
@@ -289,21 +293,21 @@ export function increasingWall(dir: number, freq = 0.1, total = 0.25): Creator<r
 
             //console.log("Creating increasing wall with duration: " + duration +  " and n: " + n)
             
-            return copyObject(n,groupEffect)
+            return copyObjectV3(n,groupEffect)
         })
 }
 
-export function initializePlayerRotation(worldRotation: remapper.KeyframesVec3, duration = 2): void
+export function initializePlayerRotation(map: remapper.V3Difficulty, worldRotation: remapper.ComplexPointsVec3, duration = 2): void
 {
     const rotationDefinition = effects.animateRotationTrack(worldRotation)
     const rotationAnimation = effects.animateTrack(duration,rotationDefinition)
 
-    rotationAnimation(0)(playerTrack())    
+    rotationAnimation(map)(0)(playerTrack())    
 }
 
-export function initializePlayerTrack(): void
+export function initializePlayerTrack(map: remapper.V3Difficulty): void
 {
-    runVoidEffect(assignPlayerToTrack(playerTrack()))
+    runVoidEffect(assignPlayerToTrackV3(map,playerTrack()))
 }
 
 export function interpolateHJD<T extends BSObject>(startTime: number, startValue: number, endTime: number, endValue: number): Effect<T>
@@ -311,7 +315,7 @@ export function interpolateHJD<T extends BSObject>(startTime: number, startValue
     return effects.parameterizeEffect(
         function(t: T)
         {
-            const value = startValue + (endValue - startValue)*(t.time-startTime)/(endTime - startTime)
+            const value = startValue + (endValue - startValue)*(t.beat-startTime)/(endTime - startTime)
 
             return effects.setHJD(value)
         }
@@ -320,12 +324,12 @@ export function interpolateHJD<T extends BSObject>(startTime: number, startValue
 
 export function interpolateNJS<T extends BSObject>(startTime: number, startValue: number, endTime: number, endValue: number): Effect<T>
 {
-    return interpolateValue("NJS",startTime,startValue,endTime,endValue)
+    return interpolateValue("noteJumpMovementSpeed",startTime,startValue,endTime,endValue)
 }
 
 export function interpolateEffect<T extends BSObject>(startTime: number, startValue: number, endTime: number, endValue: number, effect: GroupEffect<T,number>): Effect<T>
 {
-    return effects.parameterizeEffectByField("time",
+    return effects.parameterizeEffectByField("beat",
         function(time: number)
         {
             const value = startValue + (endValue - startValue)*(time-startTime)/(endTime - startTime)
@@ -349,14 +353,14 @@ export function interpolateValue<T extends BSObject>(field: keyof T, startTime: 
     return effects.parameterizeEffect(
         function(t: T)
         {
-            const value = startValue + (endValue - startValue)*(t.time-startTime)/(endTime - startTime)
+            const value = startValue + (endValue - startValue)*(t.beat-startTime)/(endTime - startTime)
 
             return effects.setValueEffect(field, value as T[keyof T])
         }
     )
 }
 
-export function invisible<T extends remapper.Note | remapper.Bomb | remapper.Chain>(): Effect<T>
+export function invisible<T extends remapper.ColorNote | remapper.Bomb | remapper.Chain>(): Effect<T>
 {
     const dissolve = effects.animateDissolve([[0,0],[0,1]])
     const dissolveArrow = effects.animateDissolveArrow([[0,0],[0,1]])
@@ -366,10 +370,10 @@ export function invisible<T extends remapper.Note | remapper.Bomb | remapper.Cha
 
 // Making notes appear without any spawn hint.
 // It appears at the JD on its HJD and then moves at the NJS. If you also want to modify that, modify it separately.
-export function noSpawn<T extends remapper.Note | remapper.Bomb>(): Effect<T>
+export function noSpawn<T extends remapper.ColorNote | remapper.Bomb>(): Effect<T>
 {
-    const dissolve: remapper.KeyframesLinear = [[0,0],[0,0.01],[1,0.0101]]
-    const dissolveArrow: remapper.KeyframesLinear = [[0,0],[0,0.01],[1,0.0101]]
+    const dissolve: remapper.ComplexPointsLinear = [[0,0],[0,0.01],[1,0.0101]]
+    const dissolveArrow: remapper.ComplexPointsLinear = [[0,0],[0,0.01],[1,0.0101]]
 
     const dissolveAnimation: Effect<T> = effects.animateDissolve(dissolve)
     const dissolveArrowAnimation: Effect<T> = effects.animateDissolveArrow(dissolveArrow)
@@ -382,17 +386,17 @@ export function noSpawn<T extends remapper.Note | remapper.Bomb>(): Effect<T>
 
 // Must have initialized position before.
 // widths are additive values. Left hand to the left, right hand to the right.
-export function openOrClose(startTime: number, endTime: number, startWidth = 0, endWidth = 1): Effect<remapper.Note>
+export function openOrClose(startTime: number, endTime: number, startWidth = 0, endWidth = 1): Effect<remapper.ColorNote>
 {
     return effects.parameterizeEffect(
-        function(note: remapper.Note)
+        function(note: remapper.ColorNote)
         {        
-            const width = startWidth + (endWidth - startWidth)*(note.time-startTime)/(endTime - startTime)        
+            const width = startWidth + (endWidth - startWidth)*(note.beat-startTime)/(endTime - startTime)        
 
-            const leftEffect = effects.addPosition([-width,0])
-            const rightEffect = effects.addPosition([width,0])
+            const leftEffect = effects.addCoordinates([-width,0])
+            const rightEffect = effects.addCoordinates([width,0])
 
-            return filterEffect(noteTypeFilter(remapper.NOTETYPE.RED),leftEffect,rightEffect)
+            return filterEffect(noteColorFilter(remapper.NoteColor.RED),leftEffect,rightEffect)
         })
 }
 
@@ -412,7 +416,7 @@ export function oscillateCurveIn<T extends BSBasicObject>(startTime: number, per
 // period is measured in beats
 export function oscillateEffect<T extends BSBasicObject>(startTime: number, period: number, amplitude: number, effect: GroupEffect<T,number>): Effect<T>
 {
-    return effects.parameterizeEffectByField("time",
+    return effects.parameterizeEffectByField("beat",
         function(time: number)
         {
             const value = -amplitude*Math.cos((time-startTime)*2*Math.PI/period)
@@ -429,27 +433,27 @@ export function oscillateEffectByArgument<T extends BSBasicObject>(startInput: n
     return effect(value)
 }
 
-export function oscillateYaw(startTime: number, endTime: number, period: number, amplitude: number): void
+export function oscillateYaw(map: remapper.V3Difficulty, startTime: number, endTime: number, period: number, amplitude: number): void
 {
-    const keyframes: remapper.KeyframesVec3 = [[0,-amplitude,0,0],[0,0,0,0.25,"easeInSine"],[0,amplitude,0,0.5,"easeOutSine"],[0,0,0,0.75,"easeInSine"],[0,-amplitude,0,1,"easeOutSine"]]    
+    const keyframes: remapper.ComplexPointsVec3 = [[0,-amplitude,0,0],[0,0,0,0.25,"easeInSine"],[0,amplitude,0,0.5,"easeOutSine"],[0,0,0,0.75,"easeInSine"],[0,-amplitude,0,1,"easeOutSine"]]    
 
     const def:TrackAnimationDefinition = 
         function(duration, event)
         {
-            event.rotation = keyframes
+            event.animation.rotation = keyframes
         }
 
     const worldRotationEffect = effects.animateTrack(period,def)
 
     for(let time = startTime; time < endTime; time += period)
     {
-        worldRotationEffect(time)(playerTrack())
+        worldRotationEffect(map)(time)(playerTrack())
     }
 }
 
 export function periodicEffect<T extends BSBasicObject>(startTime: number, period: number, effect: InterpolatedEffect<T>): Effect<T>
 {
-    return effects.parameterizeEffectByField("time",
+    return effects.parameterizeEffectByField("beat",
         function(time: number)
         {
             const moduloTime = (time - startTime + period*10000) % period
@@ -466,10 +470,10 @@ export function playerTrack(): remapper.TrackValue
 
 // Making notes "pop" then start moving
 // It pops at the JD on its HJD and then moves at the NJS. If you also want to modify that, modify it separately.
-export function popObject<T extends remapper.Note | remapper.Bomb>(): Effect<T>
+export function popObject<T extends remapper.ColorNote | remapper.Bomb>(): Effect<T>
 {
-    const dissolve: remapper.KeyframesLinear = [[0,0],[0,0.01],[1,0.0101]]
-    const dissolveArrow: remapper.KeyframesLinear = [[0,0],[0,0.01],[1,0.0101]]
+    const dissolve: remapper.ComplexPointsLinear = [[0,0],[0,0.01],[1,0.0101]]
+    const dissolveArrow: remapper.ComplexPointsLinear = [[0,0],[0,0.01],[1,0.0101]]
 
     const dissolveAnimation: Effect<T> = effects.animateDissolve(dissolve)
     const dissolveArrowAnimation: Effect<T> = effects.animateDissolveArrow(dissolveArrow)
@@ -485,7 +489,7 @@ export function popObject<T extends remapper.Note | remapper.Bomb>(): Effect<T>
 export function pushIn<T extends BSBasicObject>(groupName: string, direction: number, hjdIncrease = 1, slideDist = 8, slideEnd = 0.2): Effect<T>
 {
     const hjdEf = effects.addHJD(hjdIncrease)
-    const positionFn = function(push: number): Effect<BSBasicObject> { return effects.addPosition([direction*push,0] as remapper.Vec2)}
+    const positionFn = function(push: number): Effect<BSBasicObject> { return effects.addCoordinates([direction*push,0] as remapper.Vec2)}
     const positionEf = groups.groupEffect(groups.customDataGrouper(groupName),positionFn)
     //const widthFn = function(push: number): Effect<remapper.Wall> { return effects.addScale([pushFactor*push,0,0] as remapper.Vec3)}
     //const widthEf = groups.groupEffect(groups.customDataGroup(),widthFn,groupName)
@@ -511,7 +515,7 @@ export function pushIn<T extends BSBasicObject>(groupName: string, direction: nu
 // Put at a distance, then move in.
 // steps includes the final step being when the player can hit it
 // stepTime is a proportion of the stepDuration, and it indicates the time the notes do not move
-export function queueObject<T extends remapper.Note | remapper.Bomb>(stepDistance = 6, stayTime = 0.2, steps = 2, jumpTime = 0.25): Effect<T>
+export function queueObject<T extends remapper.ColorNote | remapper.Bomb>(stepDistance = 6, stayTime = 0.2, steps = 2, jumpTime = 0.25): Effect<T>
 {
     const playDist = 1
     const gone = -10
@@ -533,7 +537,7 @@ export function queueObject<T extends remapper.Note | remapper.Bomb>(stepDistanc
     stepArray.push(swing)
     stepArray.push(end)
     stepArray.push(postend)
-    const definitePosition: remapper.KeyframesVec3 = stepArray as remapper.KeyframesVec3
+    const definitePosition: remapper.ComplexPointsVec3 = stepArray as remapper.ComplexPointsVec3
 
     //const dissolve: remapper.KeyframesLinear = [[0,0],[0,0.01],[1,0.0101]]
     //const dissolveArrow: remapper.KeyframesLinear = [[0,0],[0,0.01],[1,0.0101]]
@@ -555,7 +559,7 @@ export function randomRotate<T extends BSBasicObject>(minPitch: number, maxPitch
     const yaw = minYaw+Math.random()*(maxYaw-minYaw)
     const roll = minRoll+Math.random()*(maxRoll-minRoll)
 
-    const rotation : remapper.KeyframesVec3 = [[0,0,0,startP],[pitch,yaw,roll,endP]]
+    const rotation : remapper.ComplexPointsVec3 = [[0,0,0,startP],[pitch,yaw,roll,endP]]
 
     const finalRotation = interpolateRotation(rotation)
 
@@ -563,15 +567,15 @@ export function randomRotate<T extends BSBasicObject>(minPitch: number, maxPitch
 }
 
 // end is a proportion of the spawn animation
-export function rollIn<T extends BSBasicObject>(extraHJD: number, end:number = 0.5, easing:remapper.KeyframeFlag="easeOutQuad"): Effect<T>
+export function rollIn<T extends BSBasicObject>(extraHJD: number, end:number = 0.5, easing:remapper.EASE="easeOutQuad"): Effect<T>
 {
     const hjdEf = effects.addHJD(extraHJD)    
     return effects.parameterizeEffect(
         (object: BSBasicObject) =>
         {            
-            const njs = object.NJS
+            const njs = object.implicitNoteJumpMovementSpeed
             const dist = njs*extraHJD
-            const position: remapper.KeyframesVec3 = [[0,0,-dist,0],[0,0,0,end,easing]]
+            const position: remapper.ComplexPointsVec3 = [[0,0,-dist,0],[0,0,0,end,easing]]
 
             const animateEf = effects.animatePosition(position)
             return effects.combineEffects([animateEf,hjdEf])
@@ -579,16 +583,16 @@ export function rollIn<T extends BSBasicObject>(extraHJD: number, end:number = 0
     )    
 }
 
-export function rollGroupsIn<T extends BSBasicObject>(beatsPerBeat = 0.8, frequency = 1, offset = 0, rollInEnd = 0.5, easing:remapper.KeyframeFlag="easeOutQuad"): Effect<T>
+export function rollGroupsIn<T extends BSBasicObject>(beatsPerBeat = 0.8, frequency = 1, offset = 0, rollInEnd = 0.5, easing:remapper.EASE="easeOutQuad"): Effect<T>
 {    
     const fn = function(time: number): Effect<T> { return rollIn(time*beatsPerBeat, rollInEnd, easing) }
     return groups.groupEffect(groups.timeGrouper(frequency,offset),fn)
 }
 
 // end is a proportion of the spawn animation
-export function slideIn<T extends BSBasicObject>(dist: number, end: number, easing:remapper.KeyframeFlag="easeLinear"): Effect<T>
+export function slideIn<T extends BSBasicObject>(dist: number, end: number, easing:remapper.EASE="easeLinear"): Effect<T>
 {
-    const position: remapper.KeyframesVec3 = [[dist,0,0,0],[0,0,0,end,easing]]
+    const position: remapper.ComplexPointsVec3 = [[dist,0,0,0],[0,0,0,end,easing]]
 
     return effects.animatePosition(position)
 }
@@ -604,7 +608,7 @@ export function spawnGroups<T extends BSBasicObject>(beatsPerBeat = 0.8, frequen
     return groups.groupEffect(groups.timeGrouper(frequency,offset),fn)
 }
 
-export function surge(stump = 0.4, duration = 0.75): Effect<remapper.Wall>
+export function surge(map: remapper.V3Difficulty, stump = 0.4, duration = 0.75): Effect<remapper.Wall>
 {
     const parametricEffect = function(surgeTime: number): Effect<remapper.Wall>
     {     
@@ -614,15 +618,15 @@ export function surge(stump = 0.4, duration = 0.75): Effect<remapper.Wall>
                 const track = randomTrackName()
              
                 const wallheight = wall.height
-                const hjd = wall.halfJumpDur
+                const hjd = wall.halfJumpDuration
                 const extra = 0.25
                 const begin = hjd+surgeTime+extra
                 const end = hjd+surgeTime+duration+extra
-                const scale = [[1,stump/wallheight,1,0],[1,stump/wallheight,1,begin],[1,1,1,end]] as remapper.KeyframesVec3
+                const scale = [[1,stump/wallheight,1,0],[1,stump/wallheight,1,begin],[1,1,1,end]] as remapper.ComplexPointsVec3
 
                 const animateTrack = effects.animateTrack(hjd+surgeTime+duration+extra,effects.animateScaleTrack(scale))
 
-                return effects.trackAnimationEffect(animateTrack,track,-hjd-extra)
+                return effects.trackAnimationEffect(map,animateTrack,track,-hjd-extra)
             }
         )        
     }
@@ -631,12 +635,12 @@ export function surge(stump = 0.4, duration = 0.75): Effect<remapper.Wall>
 }
 
 // Value should be the value for right hand notes.
-export function symmetricNoteEffect(effect: NumberGroupEffect<remapper.Note>, value: number): NoteEffect
+export function symmetricNoteEffect(effect: NumberGroupEffect<remapper.ColorNote>, value: number): NoteEffect
 {
     const leftEffect = effect(-value)
     const rightEffect = effect(value)
 
-    return filterEffect(noteTypeFilter(remapper.NOTETYPE.RED),leftEffect,rightEffect)
+    return filterEffect(noteColorFilter(remapper.NoteColor.RED),leftEffect,rightEffect)
 }
 
 // Make sure animation exists
@@ -645,7 +649,7 @@ export function uninteractableAfterPlayer<T extends BSBasicObject>(delta=0.04): 
     //return effects.animateUninteractable([[0,0],[0,1]])
     return function(t: BSBasicObject)
     {
-        const anim = t.customData["animation"] as Record<string,unknown>
+        const anim = t.unsafeCustomData["animation"] as Record<string,unknown>
         anim["interactable"] = [[1,0],[1,0.5+delta],[0,0.5+delta+0.1]]
     }
 }
@@ -669,7 +673,7 @@ export function wallSpiral(startTime: number, endTime: number, startAngle: numbe
     return geometry.sampleTime(pattern,sampler,startTime,endTime)
 }
 
-export function wallSpiralPlace(startTime: number, endTime: number, startAngle: number, period: number, direction: number, wallDist = 0.125, xradius = 2, yradius = 1.5, xoffset = 0, yoffset = 1.25, wallside = 0.5, fake = false): Creator<remapper.Wall>
+export function wallSpiralPlace(startTime: number, endTime: number, startAngle: number, period: number, direction: number, wallDist = 0.125, xradius = 2, yradius = 1.5, xoffset = 0, yoffset = 1.25, wallside = 0.5, fake = false): CreatorV3<remapper.Wall>
 {
     const samples = wallSpiral(startTime,endTime,startAngle,period,direction,wallDist,xradius,yradius,xoffset,yoffset)
 
@@ -682,14 +686,16 @@ export function wallSpiralPlace(startTime: number, endTime: number, startAngle: 
     return effects.setColor(red,green,blue,0)
 }*/
 // This assumes that the position and scale have been initialized
-export function windowWall(borderThickness = 0.1): Creator<remapper.Wall>
+export function windowWall(borderThickness = 0.1): CreatorV3<remapper.Wall>
 {
-    return parameterizeCreation(function(wall: remapper.Wall): Creator<remapper.Wall>
+    return parameterizeCreationV3(function(wall: remapper.Wall): CreatorV3<remapper.Wall>
     {
-        const startX = wall.position[0]
-        const startY = wall.position[1]
-        const endX = wall.position[0] + wall.scale[0]
-        const endY = wall.position[1] + wall.scale[1]
+        wall.coordinates = wall.coordinates ?? [0,0]
+        wall.scale = wall.scale ?? [0,0,0]
+        const startX = wall.coordinates[0]
+        const startY = wall.coordinates[1]
+        const endX = wall.coordinates[0] + wall.scale[0]
+        const endY = wall.coordinates[1] + wall.scale[1]
         const depth = wall.scale[2]
 
         const broad = (endX - startX) > borderThickness*2
@@ -740,21 +746,21 @@ export function windowWall(borderThickness = 0.1): Creator<remapper.Wall>
                     return effects.noEffect()
                 }
 
-                const setpos = effects.setPosition([minX,minY])
+                const setpos = effects.setCoordinates([minX,minY])
                 const setscale = effects.setScale([width,height,depth])
 
                 return effects.combineEffects([setpos,setscale])
             }
 
-            const copy = copyObject(4,fun)
+            const copy = copyObjectV3(4,fun)
             const dissolve = effects.animateDissolve([[0,0],[0,1]])
 
-            return createAndEffect(copy,dissolve)
+            return createAndEffectV3(copy,dissolve)
         }
         else
         {
             // If it is narrow and/or short height, just leave it as is.
-            return noCreation()
+            return noCreationV3()
         }
     })
 }
@@ -769,7 +775,7 @@ export function zoomIn<T extends BSBasicObject>(spawnDist = 35, slowDist = 15, s
     const play = [0,0,playDist,0.5]
     const after = [0,0,-slowDist,1.0]
 
-    const definitePosition: remapper.KeyframesVec3 = [spawn,slowDown,play,after] as unknown as remapper.KeyframesVec3
+    const definitePosition: remapper.ComplexPointsVec3 = [spawn,slowDown,play,after] as unknown as remapper.ComplexPointsVec3
     
     return effects.animateDefinitePosition(definitePosition)
 }
