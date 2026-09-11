@@ -1,72 +1,65 @@
-import { Note } from "../ReMapper/src/note.ts";
-import { NoteFilter, BombFilter, WallFilter, Filter, Effect, Creator, CustomDataField, BSBasicObject, NumberGroupEffect, NoteEffect } from "./types.ts";
-import * as remapper from "file:///F:/ReMapper/src/mod.ts";
+import { NoteFilter, BombFilter, WallFilter, Filter, Effect, CreatorV3, CustomDataField, BSBasicObject, NumberGroupEffect, NoteEffect, SelectorV3, NoteSelectorV3, BombSelectorV3, WallSelectorV3 } from "./types.ts";
+import * as remapper from "https://deno.land/x/remapper@4.2.3/src/mod.ts";
 
 // These wrappers hardly do anything, so arguably they're unnecessary. Don't use them if you prefer to use ReMapper directly for this.
-export function selectAllNotes(): remapper.Note[]
-{
-    return remapper.activeDiffGet().notes
+export function selectAllNotesV3(): NoteSelectorV3
+{    
+    return function(map: remapper.V3Difficulty): remapper.ColorNote[]
+    {
+        return map.colorNotes
+    }
 }
 
-export function selectAllBombs(): remapper.Bomb[]
+export function selectAllBombsV3(): BombSelectorV3
 {
-    return remapper.activeDiffGet().bombs
+    return function(map: remapper.V3Difficulty): remapper.Bomb[]
+    {
+        return map.bombs
+    }
 }
 
-export function selectAllWalls(): remapper.Wall[]
+export function selectAllWallsV3(): WallSelectorV3
 {
-    return remapper.activeDiffGet().walls
+    return function(map: remapper.V3Difficulty): remapper.Wall[]
+    {
+        return map.walls
+    }
 }
 
-export function selectAllChains(): remapper.Chain[]
+/*export function selectAllChains(): remapper.Chain[]
 {
     return remapper.activeDiffGet().chains
-}
+}*/
 
-export function selectAllFakeNotes(): remapper.Note[]
-{
-    return remapper.activeDiffGet().fakeNotes
-}
 
-export function selectAllFakeBombs(): remapper.Bomb[]
-{
-    return remapper.activeDiffGet().fakeBombs
-}
 
-export function selectAllFakeWalls(): remapper.Wall[]
-{
-    return remapper.activeDiffGet().fakeWalls
-}
-
-export function selectAllFakeChains(): remapper.Chain[]
-{
-    return remapper.activeDiffGet().fakeChains
-}
 // In addition, you're encouraged to use the "between" functions of ReMapper as a starting point for a note array.
 
 /*
 * Selecting objects
 */
 
-// Wrapper for .filter
-export function filterObjects<T>(objects: T[], filter: Filter<T>): T[]
+export function filterSelectorV3<T>(selector: SelectorV3<T>, filter: Filter<T>): SelectorV3<T>
 {
-    return objects.filter(filter)
+    return function(map: remapper.V3Difficulty): T[]
+    {
+        return selector(map).filter(filter)
+    }
 }
 
-export function selectNotes(filter: NoteFilter): remapper.Note[]
+export function selectNotesV3(filter: NoteFilter): NoteSelectorV3
 {
-    return selectAllNotes().filter(filter)
+    return filterSelectorV3(selectAllNotesV3(),filter)
 }
 
-export function selectBombs(filter: BombFilter): remapper.Bomb[]
+export function selectBombsV3(filter: BombFilter): BombSelectorV3
 {
-    return selectAllBombs().filter(filter)
+    return filterSelectorV3(selectAllBombsV3(),filter)
 }
 
-export function selectWalls(filter: WallFilter): remapper.Wall[]
+export function selectWalls(filter: WallFilter): WallSelectorV3
 {
-    return selectAllWalls().filter(filter)
+    return filterSelectorV3(selectAllWallsV3(),filter)
 }
 
 // A more general version of this with more than two options would make sense too.
@@ -112,40 +105,52 @@ export function runVoidEffect(effect: Effect<void>): void
 /*
 * Combining creation with effects
 */
-export function createWithEffect<T>(creator: Creator<T>, effect: Effect<T[]>): Creator<T>
+export function createWithEffectV3<T>(creator: CreatorV3<T>, effect: Effect<T[]>): CreatorV3<T>
 {
     return function(t: T)
     {
-        const results: T[] =  creator(t)
+        return function(map: remapper.V3Difficulty)
+        {
+            const results: T[] =  creator(t)(map)
 
-        effect(results)
+            effect(results)
 
-        return results
+            return results
+        }
     }
 }
 
-export function createWithIndividualEffect<T>(creator: Creator<T>, effect: Effect<T>): Creator<T>
+export function createWithIndividualEffectV3<T>(creator: CreatorV3<T>, effect: Effect<T>): CreatorV3<T>
 {
-    return createWithEffect(creator,mapEffect(effect))
+    return createWithEffectV3(creator,mapEffect(effect))
 }
 
-export function createAndEffect<T>(creator: Creator<T>, effect: Effect<T>): Creator<T>
+export function createAndEffectV3<T>(creator: CreatorV3<T>, effect: Effect<T>): CreatorV3<T>
 {
     return function(t: T)
     {
-        const results: T[] = creator(t)
+        return function(map: remapper.V3Difficulty)
+        {
+            const results: T[] = creator(t)(map)
 
-        effect(t)
+            effect(t)
 
-        return results
+            return results
+        }
     }
 }
 
-export function mapCreate<T>(creator: Creator<T>): Creator<T[]>
+export function mapCreateV3<T>(creator: CreatorV3<T>): CreatorV3<T[]>
 {
     return function(objects: T[])
     {
-        return objects.map(creator)
+        return function(map: remapper.V3Difficulty)
+        {
+            return objects.map(function(t: T)
+            {
+                return creator(t)(map)
+            })
+        }
     }
 }
 
@@ -170,6 +175,6 @@ export function getCustomDataField<T extends BSBasicObject,V>(field: CustomDataF
 {
     return function(t: T): V
     {
-        return getCustomDataFieldInner(t.customData,field)
+        return getCustomDataFieldInner(t.unsafeCustomData,field)
     }
 }

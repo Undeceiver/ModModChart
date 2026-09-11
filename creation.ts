@@ -1,106 +1,130 @@
-import * as remapper from "file:///F:/ReMapper/src/mod.ts";
-import { Effect, Creator, GroupEffect, NumberGroupEffect, BSBasicObject, CustomDataField, BSObject } from "./types.ts";
+import * as remapper from "https://deno.land/x/remapper@4.2.3/src/mod.ts";
+import { Effect, CreatorV3, GroupEffect, NumberGroupEffect, BSBasicObject, CustomDataField, BSObject } from "./types.ts";
 import { nothingGroupEffect } from "./groups.ts";
-import { createWithEffect, createWithIndividualEffect, getCustomDataField } from "./functions.ts";
+import { createWithEffectV3, createWithIndividualEffectV3, getCustomDataField } from "./functions.ts";
 
-export function noCreation<T>(): Creator<T>
+export function noCreationV3<T>(): CreatorV3<T>
 {
     return function(t:T)
     {
-        return []
+        return function(map: remapper.V3Difficulty)
+        {
+            return []
+        }
     }
 }
-export function parameterizeCreation<T>(creator: ((t:T) => Creator<T>)): Creator<T>
+export function parameterizeCreationV3<T>(creator: ((t:T) => CreatorV3<T>)): CreatorV3<T>
 {
     return function(t:T)
     {
-        return creator(t)(t)
+        return function(map: remapper.V3Difficulty)
+        {
+            return creator(t)(t)(map)
+        }
     }
 }
 
-export function parameterizeCreationByField<T,K extends keyof T>(field: K, creator: (v: T[K]) => Creator<T>): Creator<T>
+export function parameterizeCreationByFieldV3<T,K extends keyof T>(field: K, creator: (v: T[K]) => CreatorV3<T>): CreatorV3<T>
 {
     return function(t: T)
     {
-        return creator(t[field])(t)
+        return function(map: remapper.V3Difficulty)
+        {
+            return creator(t[field])(t)(map)
+        }
     }
 }
 
-export function parameterizeCreationByCustomData<T extends BSBasicObject,V>(field: CustomDataField, creator: (v: V) => Creator<T>): Creator<T>
+export function parameterizeCreationByCustomDataV3<T extends BSBasicObject,V>(field: CustomDataField, creator: (v: V) => CreatorV3<T>): CreatorV3<T>
 {
     return function(t: T)
     {
-        return creator(getCustomDataField<T,V>(field)(t))(t)
+        return function(map: remapper.V3Difficulty)
+        {
+            return creator(getCustomDataField<T,V>(field)(t))(t)(map)
+        }
     }
 }
 
-export function createWalls(copies = 1, fn: NumberGroupEffect<remapper.Wall> = nothingGroupEffect, fake = false ): Creator<remapper.Wall>
+export function createWallsV3(copies = 1, fn: NumberGroupEffect<remapper.Wall> = nothingGroupEffect, fake = false ): CreatorV3<remapper.Wall>
 {
     return function(owall: remapper.Wall)
     {
-        const result: remapper.Wall[] = []
-        for(let i = 0; i < copies; i++)
-        {
-            const wall = new remapper.Wall()
-            fn(i)(wall)
-            wall.push(fake,false)
-            result.push(wall)
+        return function(map: remapper.V3Difficulty)
+        {        
+            const result: remapper.Wall[] = []
+            for(let i = 0; i < copies; i++)
+            {
+                const wall = new remapper.Wall(map,{fake:fake})
+                fn(i)(wall)
+                result.push(wall)
+            }
+
+            return result
         }
-        return result
     }
 }
 
-export function createNotes(copies = 1, fn: NumberGroupEffect<remapper.Note> = nothingGroupEffect, fake = false): Creator<remapper.Note>
+export function createNotesV3(copies = 1, fn: NumberGroupEffect<remapper.ColorNote> = nothingGroupEffect, fake = false): CreatorV3<remapper.ColorNote>
 {
-    return function(onote: remapper.Note)
+    return function(onote: remapper.ColorNote)
     {
-        const result: remapper.Note[] = []
-        for(let i = 0; i < copies; i++)
+        return function(map: remapper.V3Difficulty)
         {
-            const note = new remapper.Note()
-            fn(i)(note)
-            note.push(fake,false)
-            result.push(note)
+            const result: remapper.ColorNote[] = []
+            for(let i = 0; i < copies; i++)
+            {
+                const note = new remapper.ColorNote(map,{fake:fake})
+                fn(i)(note)                
+                result.push(note)
+            }
+
+            return result
         }
-        return result
     }
 }
 
-export function createBombs(copies = 1, fn: NumberGroupEffect<remapper.Bomb> = nothingGroupEffect, fake = false): Creator<remapper.Bomb>
+export function createBombsV3(copies = 1, fn: NumberGroupEffect<remapper.Bomb> = nothingGroupEffect, fake = false): CreatorV3<remapper.Bomb>
 {
     return function(onote: remapper.Bomb)
     {
-        const result: remapper.Bomb[] = []
-        for(let i = 0; i < copies; i++)
+        return function(map: remapper.V3Difficulty)
         {
-            const bomb = new remapper.Bomb()
-            fn(i)(bomb)
-            bomb.push(fake,false)
-            result.push(bomb)
+            const result: remapper.Bomb[] = []
+            for(let i = 0; i < copies; i++)
+            {
+                const bomb = new remapper.Bomb(map,{fake:fake})
+                fn(i)(bomb)
+                result.push(bomb)
+            }
+
+            return result
         }
-        return result
     }
 }
 
 
-export function copyObject<T extends BSObject>(copies = 1, fn: NumberGroupEffect<T> = nothingGroupEffect, fake = false): Creator<T>
+export function copyObjectV3<T extends BSObject>(copies = 1, fn: NumberGroupEffect<T> = nothingGroupEffect, fake = false): CreatorV3<T>
 {
     return function(t:T)
     {
-        const result: T[] = []
-        for(let i = 0; i < copies; i++)
+        return function(map: remapper.V3Difficulty)
         {
-            const obj = remapper.copy(t)
-            obj.animate = new remapper.Animation().noteAnimation(obj.animation);
-            fn(i)(obj)
-            obj.push(fake,false)
-            result.push(obj)
+            const result: T[] = []
+            for(let i = 0; i < copies; i++)
+            {
+                const obj = remapper.copy(t)
+                //obj.animate = new remapper.Animation().noteAnimation(obj.animation);
+                fn(i)(obj)                
+                result.push(obj)
+            }
+
+            return result
         }
-        return result
     }
 }
 
-export function effectOnFake<T extends BSBasicObject>(effect: Effect<T>): Creator<T>
+export function effectOnFakeV3<T extends BSBasicObject>(effect: Effect<T>): CreatorV3<T>
 {
-    return createWithIndividualEffect(copyObject<T>(1,nothingGroupEffect,true),effect)
+    return createWithIndividualEffectV3(copyObjectV3<T>(1,nothingGroupEffect,true),effect)
 }

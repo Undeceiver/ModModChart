@@ -1,10 +1,8 @@
-import { Effect, NoteEffect, BombEffect, WallEffect, BSBasicObject, CustomDataField, TrackAnimation, TrackAnimationDefinition, BSObject } from "./types.ts";
-import * as remapper from "file:///F:/ReMapper/src/mod.ts";
+import { Effect, NoteEffect, BombEffect, WallEffect, BSBasicObject, CustomDataField, TrackAnimationV3, TrackAnimationDefinition, BSObject } from "./types.ts";
+import * as remapper from "https://deno.land/x/remapper@4.2.3/src/mod.ts";
 import * as util from "./util.ts"
 import { mapEffect } from "./functions.ts";
 import { getCustomDataField } from "./functions.ts";
-import { Note } from "file:///F:/ReMapper/src/note.ts";
-import { NOTETYPE } from "file:///F:/ReMapper/src/constants.ts";
 
 export function noEffect<T>(): Effect<T>
 {
@@ -50,7 +48,7 @@ export function parameterizeEffectByField<T,K extends keyof T>(field: K, effect:
 export function parameterizeEffectByCustomData<T extends BSBasicObject,V>(field: CustomDataField, effect: (v: V) => Effect<T>): Effect<T>
 {
     return function(t: T)
-    {
+    {           
         effect(getCustomDataField<T,V>(field)(t))(t)
     }
 }
@@ -71,42 +69,30 @@ export function disableValue<T,K extends keyof T>(field: K): Effect<T>
 export function toggleValue<T,K extends keyof T>(field: K): Effect<T>
 {
     return parameterizeEffect(
-        function(t: T)
-        {
+        function(t: T)        {           
+            
             return setValueEffect(field,(!(t[field] as boolean)) as T[K])
         })
 }
 
-export function disableNoteGravity<T extends remapper.Note | remapper.Bomb>(): Effect<T>
+export function disableNoteGravity<T extends remapper.ColorNote | remapper.Bomb>(): Effect<T>
 {
-    return disableValue("noteGravity")
+    return enableValue("disableNoteGravity")
 }
 
-export function disableSpawnEffect<T extends remapper.Note | remapper.Bomb>(): Effect<T>
+export function disableSpawnEffect<T extends remapper.ColorNote | remapper.Bomb>(): Effect<T>
 {
     return disableValue("spawnEffect")
 }
 
-export function disableNoteLook<T extends remapper.Note | remapper.Bomb>(): Effect<T>
+export function disableNoteLook<T extends remapper.ColorNote | remapper.Bomb>(): Effect<T>
 {
-    return disableValue("noteLook")
+    return enableValue("disableNoteLook")
 }
 
-export function disableBadCutSaberType<T extends remapper.Note>(): Effect<T>
+export function disableBadCutSaberType<T extends remapper.ColorNote>(): Effect<T>
 {
-    return function(note: remapper.Note)
-    {
-        note.customData["disableBadCutSaberType"] = true
-    }
-}
-
-export function makeFakeNote(map:remapper.Difficulty): Effect<remapper.Note>
-{
-    return function(t: remapper.Note)
-    {
-        t.push(true,false)
-        map.notes.splice(map.notes.indexOf(t),1)
-    }
+    return enableValue("disableBadCutSaberType")
 }
 
 /*
@@ -131,34 +117,36 @@ export function addValueEffect<T,K extends keyof T>(field: K, value: number): Ef
 }
 
 export function setNJS<T extends BSObject>(njs: number): Effect<T>
-{
-    return setValueEffect("NJS", njs)    
+{    
+    return setValueEffect("noteJumpMovementSpeed", njs)    
 }
 
 export function addNJS<T extends BSObject>(njs: number): Effect<T>
 {
-    return addValueEffect("NJS", njs)    
+    return addValueEffect("noteJumpMovementSpeed", njs)    
 }
 
 export function setOffset<T extends BSObject>(offset: number): Effect<T>
 {
-    return setValueEffect("offset", offset)
+    return setValueEffect("noteJumpStartBeatOffset", offset)
 }
 
 export function addOffset<T extends BSObject>(offset: number): Effect<T>
 {
-    return addValueEffect("offset", offset)    
+    return addValueEffect("noteJumpStartBeatOffset", offset)    
 }
 
 export function setHJD<T extends BSObject>(hjd: number): Effect<T>
 {
-    return parameterizeEffectByField("halfJumpDur",
+    return parameterizeEffectByField("halfJumpDuration",
         function(halfJumpDur: number)
         {
-            return parameterizeEffectByField("offset",
-                function(offset: number)
+            return parameterizeEffectByField("noteJumpStartBeatOffset",
+                function(offset: number | undefined)
                 {
-                    return setOffset(offset+hjd-halfJumpDur)
+                    offset = offset ?? 0
+
+                    return setOffset(offset+hjd-halfJumpDur)                    
                 })
             })        
 }
@@ -178,28 +166,21 @@ export function addDuration(duration: number): Effect<remapper.Wall>
     return addValueEffect("duration",duration)
 }
 
-export function setTime<T extends BSObject>(time: number): Effect<T>
+export function setBeat<T extends BSObject>(beat: number): Effect<T>
 {
-    return setValueEffect("time",time)
+    return setValueEffect("beat",beat)
 }
 
-export function addTime<T extends BSObject>(time: number): Effect<T>
+export function addBeat<T extends BSObject>(beat: number): Effect<T>
 {
-    return addValueEffect("time",time)
+    return addValueEffect("beat",beat)
 }
 
-export function setDirection<T extends remapper.Note | remapper.Chain>(direction: remapper.CUT): Effect<T>
+export function setCutDirection<T extends remapper.ColorNote | remapper.Chain>(cutDirection: remapper.NoteCut): Effect<T>
 {
     return function(t: T)
         {
-            if(t instanceof remapper.Note)
-            {
-                t.direction = direction
-            }
-            else if(t instanceof remapper.Chain)
-            {
-                t.headDirection = direction
-            }
+            t.cutDirection = cutDirection            
         }
 }
 
@@ -215,9 +196,9 @@ export function setY<T extends BSObject>(y: number): Effect<T>
 }
 
 
-export function setPosition<T extends BSObject>(position: remapper.Vec2): Effect<T>
+export function setCoordinates<T extends BSObject>(coordinates: remapper.Vec2): Effect<T>
 {
-    return setValueEffect("position",position)
+    return setValueEffect("coordinates",coordinates)
 }
 
 export function initializePosition<T extends BSObject>(): Effect<T>
@@ -228,19 +209,19 @@ export function initializePosition<T extends BSObject>(): Effect<T>
             return parameterizeEffect(
                 function(t: T)
                 {
-                    if("coordinates" in t.customData)                    
+                    if("coordinates" in t.unsafeCustomData)                    
                     {
                         return noEffect()
                     }
                     else
                     {
-                        return setPosition([util.fromVanillaToNEX(t.x),util.fromVanillaToNEY(t.y)] as remapper.Vec2)
+                        return setCoordinates([util.fromVanillaToNEX(t.x),util.fromVanillaToNEY(t.y)] as remapper.Vec2)
                     }
                 })            
         })
 }
 
-export function initializeRotation<T extends remapper.Note>(): Effect<T>
+export function initializeRotation<T extends remapper.ColorNote>(): Effect<T>
 {
     return parameterizeEffect(
         function(t: T)
@@ -248,7 +229,7 @@ export function initializeRotation<T extends remapper.Note>(): Effect<T>
             return parameterizeEffect(
                 function(t: T)
                 {
-                    if("localRotation" in t.customData)                    
+                    if("localRotation" in t.unsafeCustomData)                    
                     {
                         return noEffect()
                     }
@@ -263,12 +244,13 @@ export function initializeRotation<T extends remapper.Note>(): Effect<T>
         })
 }
 
-export function addPosition<T extends remapper.Note | remapper.Wall | remapper.Bomb>(position: remapper.Vec2): Effect<T>
+export function addCoordinates<T extends remapper.ColorNote | remapper.Wall | remapper.Bomb>(coordinates: remapper.Vec2): Effect<T>
 {
-    return parameterizeEffectByField("position",
-        function(prevPosition: remapper.Vec2)
+    return parameterizeEffectByField("coordinates",
+        function(prevCoordinates: remapper.Vec2 | undefined)
         {
-            return setPosition([position[0] + prevPosition[0],position[1] + prevPosition[1]] as remapper.Vec2)
+            prevCoordinates = prevCoordinates ?? [0,0]
+            return setCoordinates([coordinates[0] + prevCoordinates[0],coordinates[1] + prevCoordinates[1]] as remapper.Vec2)
         })
 }
 
@@ -300,12 +282,12 @@ export function addWidth<T extends remapper.Wall>(width: number): Effect<T>
     return addValueEffect("width",width)
 }
 
-export function setAngle(angle: number): Effect<Note>
+export function setAngle(angle: number): Effect<remapper.ColorNote>
 {
     return setValueEffect("angleOffset",Math.round(angle))
 }
 
-export function addAngle(angle: number): Effect<Note>
+export function addAngle(angle: number): Effect<remapper.ColorNote>
 {
     return addValueEffect("angleOffset",Math.round(angle))
 }
@@ -328,8 +310,8 @@ export function initializeScale<T extends remapper.Wall>(): Effect<T>
                         {
                             return parameterizeEffect(
                                 function(t: T)
-                                {
-                                    if("size" in t.customData)
+                                {                                    
+                                    if("size" in t.unsafeCustomData)
                                     {
                                         return noEffect()
                                     }
@@ -343,15 +325,6 @@ export function initializeScale<T extends remapper.Wall>(): Effect<T>
         })
 }
 
-export function addScale<T extends remapper.Wall>(scale: remapper.Vec3): Effect<T>
-{
-    return parameterizeEffectByField("scale",
-        function(prevScale: remapper.Vec3)
-        {
-            return setScale([scale[0] + prevScale[0],scale[1] + prevScale[1],scale[2] + prevScale[2]] as remapper.Vec3)
-        })
-}
-
 export function setLocalRotation<T extends BSBasicObject>(localRotation: remapper.Vec3): Effect<T>
 {
     return setValueEffect("localRotation",localRotation)
@@ -359,83 +332,83 @@ export function setLocalRotation<T extends BSBasicObject>(localRotation: remappe
 
 export function setWorldRotation<T extends BSBasicObject>(worldRotation: remapper.Vec3): Effect<T>
 {
-    return setValueEffect("rotation",worldRotation)
+    return setValueEffect("worldRotation",worldRotation)
 }
 
 export function setUninteractable<T extends BSBasicObject>(uninteractable = true): Effect<T>
 {
-    return setValueEffect("interactable",!uninteractable)
+    return setValueEffect("uninteractable",uninteractable)
 }
 
-export function setColor<T extends BSBasicObject>(red: number, green: number, blue: number, alpha: number): Effect<T>
+export function setChromaColor<T extends BSBasicObject>(red: number, green: number, blue: number, alpha: number): Effect<T>
 {
-    return setValueEffect("color",[red,green,blue,alpha])
+    return setValueEffect("chromaColor",[red,green,blue,alpha])
 }
 
 /*
 * Path animations
 */
-export function animateDefinitePosition<T extends BSBasicObject>(definitePosition: remapper.KeyframesVec3): Effect<T>
+export function animateDefinitePosition<T extends BSBasicObject>(definitePosition: remapper.ComplexPointsVec3): Effect<T>
 {
     return function(obj: BSBasicObject)
     {
-        obj.animate.definitePosition = definitePosition        
+        obj.animation.definitePosition = definitePosition        
     }
 }
 
-export function animatePosition<T extends BSBasicObject>(position: remapper.KeyframesVec3): Effect<T>
+export function animatePosition<T extends BSBasicObject>(position: remapper.ComplexPointsVec3): Effect<T>
 {
     return function(obj: BSBasicObject)
     {
-        obj.animate.position = position
+        obj.animation.position = position
     }
 }
 
-export function animateDissolve<T extends BSObject>(dissolve: remapper.KeyframesLinear): Effect<T>
+export function animateDissolve<T extends BSObject>(dissolve: remapper.ComplexPointsLinear): Effect<T>
 {
     return function(obj: BSObject)
     {
-        obj.animate.dissolve = dissolve
+        obj.animation.dissolve = dissolve
     }
 }
 
-export function animateDissolveArrow<T extends remapper.Note | remapper.Bomb | remapper.Chain>(dissolveArrow: remapper.KeyframesLinear): Effect<T>
+export function animateDissolveArrow<T extends remapper.ColorNote | remapper.Bomb | remapper.Chain>(dissolveArrow: remapper.ComplexPointsLinear): Effect<T>
 {
-    return function(obj: remapper.Note | remapper.Bomb | remapper.Chain)
+    return function(obj: remapper.ColorNote | remapper.Bomb | remapper.Chain)
     {
-        obj.animate.dissolveArrow = dissolveArrow
+        obj.animation.dissolveArrow = dissolveArrow
     }
 }
 
-export function animateScale<T extends BSBasicObject>(scale: remapper.KeyframesVec3): Effect<T>
-{
-    return function(obj: BSBasicObject)
-    {
-        obj.animate.scale = scale
-    }
-}
-
-export function animateWorldRotation<T extends BSBasicObject>(rotation: remapper.KeyframesVec3): Effect<T>
+export function animateScale<T extends BSBasicObject>(scale: remapper.ComplexPointsVec3): Effect<T>
 {
     return function(obj: BSBasicObject)
     {
-        obj.animate.rotation = rotation
+        obj.animation.scale = scale
     }
 }
 
-export function animateLocalRotation<T extends BSBasicObject>(rotation: remapper.KeyframesVec3): Effect<T>
+export function animateWorldRotation<T extends BSBasicObject>(rotation: remapper.ComplexPointsVec3): Effect<T>
 {
     return function(obj: BSBasicObject)
     {
-        obj.animate.localRotation = rotation
+        obj.animation.rotation = rotation
     }
 }
 
-export function animateUninteractable<T extends BSBasicObject>(uninteractable: remapper.KeyframesLinear): Effect<T>
+export function animateLocalRotation<T extends BSBasicObject>(rotation: remapper.ComplexPointsVec3): Effect<T>
 {
     return function(obj: BSBasicObject)
     {
-        obj.animate.uninteractable = uninteractable
+        obj.animation.localRotation = rotation
+    }
+}
+
+export function animateUninteractable<T extends BSBasicObject>(uninteractable: remapper.ComplexPointsLinear): Effect<T>
+{
+    return function(obj: BSBasicObject)
+    {
+        obj.animation.uninteractable = uninteractable
     }
 }
 
@@ -451,77 +424,84 @@ export function addTrack<T extends BSBasicObject>(track: remapper.TrackValue): E
 }
 
 // This should only be used in some cases, not in general
-export function trackAnimationEffect<T extends BSBasicObject>(animation: TrackAnimation, track: remapper.TrackValue, timeVariation = 0): Effect<T>
+export function trackAnimationEffect<T extends BSBasicObject>(map: remapper.V3Difficulty, animation: TrackAnimationV3, track: remapper.TrackValue, timeVariation = 0): Effect<T>
 {
     return function(t:T)
     {
         addTrack(track)(t)
 
-        animation(t.time+timeVariation)(track)
+        animation(map)(t.beat+timeVariation)(track)
     }
 }
 
-export function animateTrack(duration: number, animation: TrackAnimationDefinition, easing: remapper.EASE | undefined = undefined): TrackAnimation
+export function animateTrack(duration: number, animation: TrackAnimationDefinition, easing: remapper.EASE | undefined = undefined): TrackAnimationV3
 {
 
-    return function(time: number)
+    return function(map: remapper.V3Difficulty)
     {
-        return function(track: remapper.TrackValue)
+        return function(time: number)
         {
-            const event = new remapper.CustomEvent(time).animateTrack(track, duration, undefined, easing)
-            
-            animation(duration,event.animate)
-
-            event.push()
+            return function(track: remapper.TrackValue)
+            {
+                const event = remapper.animateTrack(map,
+                    {
+                        beat: time,
+                        duration: duration,
+                        track: track,
+                        easing: easing
+                    })                
+                
+                animation(duration,event)
+            }
         }
     }
 }
 
 // Use the keyframes with absolute times, it gets translated to proportions
-export function animatePositionTrack(position: remapper.KeyframesVec3): TrackAnimationDefinition
-{
-    return function(duration, event)
-    {
-        event.offsetPosition = util.beatsToTrackAnimationPVec3(duration)(position)        
-    }
-}
-
-export function animateScaleTrack(scale: remapper.KeyframesVec3): TrackAnimationDefinition
-{
-    return function(duration, event)
-    {
-        event.scale = util.beatsToTrackAnimationPVec3(duration)(scale)
-    }
-}
-
-export function animateRotationTrack(worldRotation: remapper.KeyframesVec3): TrackAnimationDefinition
+export function animatePositionTrack(position: remapper.ComplexPointsVec3): TrackAnimationDefinition
 {
     return function(duration, event)
     {        
-        event.rotation = util.beatsToTrackAnimationPVec3(duration)(worldRotation)
+        event.animation.offsetPosition = util.beatsToTrackAnimationPVec3(duration)(position)        
     }
 }
 
-export function animateWorldRotationTrack(worldRotation: remapper.KeyframesVec3): TrackAnimationDefinition
+export function animateScaleTrack(scale: remapper.ComplexPointsVec3): TrackAnimationDefinition
+{
+    return function(duration, event)
+    {
+        event.animation.scale = util.beatsToTrackAnimationPVec3(duration)(scale)
+    }
+}
+
+export function animateRotationTrack(worldRotation: remapper.ComplexPointsVec3): TrackAnimationDefinition
 {
     return function(duration, event)
     {        
-        event.offsetRotation = util.beatsToTrackAnimationPVec3(duration)(worldRotation)
+        event.animation.rotation = util.beatsToTrackAnimationPVec3(duration)(worldRotation)
     }
 }
 
-export function animateDissolveTrack(dissolve: remapper.KeyframesLinear): TrackAnimationDefinition
+export function animateWorldRotationTrack(worldRotation: remapper.ComplexPointsVec3): TrackAnimationDefinition
 {
     return function(duration, event)
-    {
-        event.dissolve = util.beatsToTrackAnimationPLinear(duration)(dissolve)
+    {        
+        event.animation.offsetRotation = util.beatsToTrackAnimationPVec3(duration)(worldRotation)
     }
 }
 
-export function animateDissolveArrowTrack(dissolve: remapper.KeyframesLinear): TrackAnimationDefinition
+export function animateDissolveTrack(dissolve: remapper.ComplexPointsLinear): TrackAnimationDefinition
 {
     return function(duration, event)
     {
-        event.dissolveArrow = util.beatsToTrackAnimationPLinear(duration)(dissolve)
+        event.animation.dissolve = util.beatsToTrackAnimationPLinear(duration)(dissolve)
+    }
+}
+
+export function animateDissolveArrowTrack(dissolve: remapper.ComplexPointsLinear): TrackAnimationDefinition
+{
+    return function(duration, event)
+    {
+        event.animation.dissolveArrow = util.beatsToTrackAnimationPLinear(duration)(dissolve)
     }
 }

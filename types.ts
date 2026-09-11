@@ -13,11 +13,18 @@ export type CustomDataField =
 /*
 * Filter types
 */
+
 export type Filter<T> = ((t: T) => boolean)
 
 export type NoteFilter = Filter<remapper.ColorNote>
 export type BombFilter = Filter<remapper.Bomb>
 export type WallFilter = Filter<remapper.Wall>
+
+export type SelectorV3<T> = ((map: remapper.V3Difficulty) => T[])
+
+export type NoteSelectorV3 = SelectorV3<remapper.ColorNote>
+export type BombSelectorV3 = SelectorV3<remapper.Bomb>
+export type WallSelectorV3 = SelectorV3<remapper.Wall>
 
 /*
 * Effect types
@@ -47,14 +54,13 @@ export type InterpolatedEffect<T> = ((startTime: number, endTime:number) => Numb
 */
 
 // A creator always start from an original object. For simplicity, we assume the resulting objects created are of the same type.
-export type Creator<T> = ((t:T) => T[])
+export type CreatorV3<T> = ((t:T) => ((map: remapper.V3Difficulty) => (T[])))
 
 /*
 * Track animations
 */
-export type TrackAnimation = ((time: number) => Effect<remapper.TrackValue>)
-// Can't remember what this was for, comment out for now until I find out.
-//export type TrackAnimationDefinition = ((duration: number, event:remapper.AnimationInternals.AbstractAnimation) => void)
+export type TrackAnimationV3 = (map: remapper.V3Difficulty) => ((time: number) => Effect<remapper.TrackValue>)
+export type TrackAnimationDefinition = ((duration: number, event:remapper.AnimateTrack) => void)
 
 /*
 * Geometric patterns, for an individual point in time.

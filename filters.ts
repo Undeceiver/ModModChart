@@ -1,5 +1,5 @@
 import { BSBasicObject, BSObject, Filter } from "./types.ts";
-import * as remapper from "file:///F:/ReMapper/src/mod.ts";
+import * as remapper from "https://deno.land/x/remapper@4.2.3/src/mod.ts";
 
 /*
 * Operations between filters. These do not seem to be standard in JavaScript / TypeScript (that I could find)
@@ -42,7 +42,7 @@ export function labelFilter<T extends BSObject>(label:string): Filter<T>
 {
     return function(t: T)
     {
-        return t.customData[label] === true
+        return t.unsafeCustomData[label] === true
     }
 }
 
@@ -50,7 +50,7 @@ export function groupFilter<T extends BSObject>(groupName:string): Filter<T>
 {
     return function(t: T)
     {
-        return groupName in t.customData
+        return groupName in t.unsafeCustomData
     }
 }
 
@@ -59,7 +59,7 @@ export function beatFilter<T extends BSObject>(start: number, end: number, start
 {
     return function(t: T)
     {
-        return ((t.time > start) || (startInclusive && t.time == start)) && ((t.time < end) || (endInclusive && t.time ==  end))
+        return ((t.beat > start) || (startInclusive && t.beat == start)) && ((t.beat < end) || (endInclusive && t.beat ==  end))
     }
 }
 
@@ -83,20 +83,20 @@ export function beatModuloFilter<T extends BSObject>(quotient: number, minModulo
 {
     return function(t: T)
     {
-        const modulo = (t.time - offset + 10000*quotient) % quotient
+        const modulo = (t.beat - offset + 10000*quotient) % quotient
         if(modulo < 0)
         {
-            console.log("NEGATIVE MODULO!!: " + modulo + " = " + t.time + " - " + offset + " % " + quotient)
+            console.log("NEGATIVE MODULO!!: " + modulo + " = " + t.beat + " - " + offset + " % " + quotient)
         }
 
         return (modulo >= minModulo) && (modulo <= maxModulo)
     }
 }
 
-export function noteTypeFilter(type: remapper.NOTETYPE): Filter<remapper.Note>
+export function noteColorFilter(color: remapper.NoteColor): Filter<remapper.ColorNote>
 {
-    return function(t: remapper.Note)
+    return function(t: remapper.ColorNote)
     {
-        return t.type == type
+        return t.color == color
     }
 }

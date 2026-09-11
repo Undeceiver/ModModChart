@@ -1,4 +1,4 @@
-import * as remapper from "file:///F:/ReMapper/src/mod.ts";
+import * as remapper from "https://deno.land/x/remapper@4.2.3/src/mod.ts";
 import { Effect, Grouper, StringGrouper, NumberGrouper, GroupEffect, StringGroupEffect, NumberGroupEffect, BSBasicObject } from "./types.ts";
 import { parameterizeEffect } from "./effects.ts";
 
@@ -14,16 +14,16 @@ export function groupEffect<T,V>(grouper: Grouper<T,V>, effect: GroupEffect<T,V>
 export function customDataGrouper<T extends BSBasicObject, V>(groupName: string): Grouper<T,V>
 {
     return function(t: T)
-    {
-        return t.customData[groupName] as V
+    {        
+        return t.unsafeCustomData[groupName] as V
     }
 }
 
 export function timeGrouper<T extends BSBasicObject>(frequency = 1, offset = 0): NumberGrouper<T>
 {
     return function(t: T)
-    {
-        return (t.time - offset) % frequency
+    {        
+        return (t.beat - offset) % frequency
     }
 }
 
