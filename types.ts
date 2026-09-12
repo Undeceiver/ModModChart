@@ -106,3 +106,12 @@ export type TimeSamples<T> = [number,T][]
 export type PointTimeSamples = TimeSamples<remapper.Vec2>
 
 export type TimePointPatternDefinition = [number,number,number,number,number,number][] // [time,angle,xradius,yradius,xoffset,yoffset]. The path begins on the first keyframe and ends at the last keyframe.
+
+/*
+* Parameters. I may want to rewrite some of the above in terms of this in the future.
+* Note that parameter types P should only contain string keys!!!
+*/
+// keyof P extends string - This constraint should hold, but there is no simple way to impose it.
+// Instead, we create a type alias ParameterKind that is purely indicative, and is actually equal to any.
+export type ParameterKind = object
+export type Parameterized<P extends ParameterKind,T> = ((params: P) => T)
