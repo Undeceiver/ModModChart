@@ -243,3 +243,35 @@ export function getDiscreteDirectionVector(direction: remapper.NoteCut): [number
             return [0,0]
     }
 }
+
+// Groups patterns, where a pattern is all notes on the same beat.
+// This function assumes notes come in order for simplicity.
+export function patternsFromNotes(notes: remapper.ColorNote[]): remapper.ColorNote[][]
+{
+    const result : remapper.ColorNote[][] = []
+    let curPattern : remapper.ColorNote[] = []
+    let curBeat = -1
+
+    for(let i = 0; i < notes.length; i++)
+    {
+        const curNote = notes[i]
+
+        if(curPattern.length == 0)
+        {
+            curPattern.push(curNote)
+            curBeat = curNote.beat
+        }
+        else if(curNote.beat != curBeat)
+        {
+            result.push(curPattern)
+            curPattern = [curNote]
+            curBeat = curNote.beat
+        }        
+        else
+        {
+            curPattern.push(curNote)            
+        }
+    }
+
+    return result
+}

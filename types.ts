@@ -48,6 +48,23 @@ export type NumberGroupEffect<T> = GroupEffect<T,number>
 
 export type InterpolatedEffect<T> = ((startTime: number, endTime:number) => NumberGroupEffect<T>)
 
+/*
+* Identifying objects
+*/
+export type Identifier<T> = (t1: T, t2: T) => boolean
+
+export type NoteIdentifier = Identifier<remapper.ColorNote>
+export type BombIdentifier = Identifier<remapper.Bomb>
+export type WallIdentifier = Identifier<remapper.Wall>
+
+/*
+* Linking objects - Objects that point to others.
+*/
+export type Linker<T> = ((t: T) => T[])
+
+export type NoteLinker = Linker<remapper.ColorNote>
+export type BombLinker = Linker<remapper.Bomb>
+export type WallLinker = Linker<remapper.Wall>
 
 /*
 * Creating new objects

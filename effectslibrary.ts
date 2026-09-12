@@ -1,4 +1,4 @@
-import { Effect, NoteEffect, BombEffect, WallEffect, BSBasicObject, NoteOrBomb, CreatorV3, GroupEffect, NumberGroupEffect, TrackAnimationDefinition, InterpolatedEffect, TimePointPattern, PointTimeSamples, TimeSampler, TimeLinePattern, BSObject } from "./types.ts";
+import { Effect, NoteEffect, BombEffect, WallEffect, BSBasicObject, NoteOrBomb, CreatorV3, GroupEffect, NumberGroupEffect, TrackAnimationDefinition, InterpolatedEffect, TimePointPattern, PointTimeSamples, TimeSampler, TimeLinePattern, BSObject, Linker } from "./types.ts";
 import * as effects from "./effects.ts"
 import * as groups from "./groups.ts"
 import * as geometry from "./geometricpatterns.ts"
@@ -600,6 +600,45 @@ export function slideIn<T extends BSBasicObject>(dist: number, end: number, easi
 export function small<T extends NoteOrBomb>(scale = 0.8): Effect<T>
 {
     return effects.animateScale([[scale,scale,scale,0],[scale,scale,scale,1]])
+}
+
+// linker should link backwards, linking each element to the element that makes it spawn
+export function spawnInSync(linker: Linker<remapper.ColorNote>): Effect<remapper.ColorNote>
+{
+    return function(t: remapper.ColorNote)
+    {
+        const spawners = linker(t)        
+
+        if(spawners.length == 0)
+        {
+            return
+        }
+
+        const spawnBeat = Math.min.apply(null,spawners.map((spawner) => spawner.beat))
+
+        const beatDiff = t.beat - spawnBeat
+
+        if(beatDiff <= 0)
+        {
+            return
+        }
+
+        t.halfJumpDuration = beatDiff
+
+        const dissolve: remapper.ComplexPointsLinear = [[0,0],[0,0.01],[1,0.0101]]
+        const dissolveArrow: remapper.ComplexPointsLinear = [[0,0],[0,0.01],[1,0.0101]]
+
+        const dissolveAnimation: Effect<remapper.ColorNote> = effects.animateDissolve(dissolve)
+        const dissolveArrowAnimation: Effect<remapper.ColorNote> = effects.animateDissolveArrow(dissolveArrow)
+
+        const disableSpawnEffect: Effect<remapper.ColorNote> = effects.disableSpawnEffect()
+        const disableNoteLook: Effect<remapper.ColorNote> = effects.disableNoteLook()
+        const disableNoteGravity: Effect<remapper.ColorNote> = effects.disableNoteGravity()
+
+        const disableFlip: Effect<remapper.ColorNote> = effects.disableFlip()
+
+        effects.combineEffects([dissolveAnimation,dissolveArrowAnimation,disableSpawnEffect,disableNoteLook,disableFlip,disableNoteGravity])(t)               
+    }
 }
 
 export function spawnGroups<T extends BSBasicObject>(beatsPerBeat = 0.8, frequency = 1, offset = 0): Effect<T>

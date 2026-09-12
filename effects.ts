@@ -86,8 +86,21 @@ export function disableSpawnEffect<T extends remapper.ColorNote | remapper.Bomb>
 }
 
 export function disableNoteLook<T extends remapper.ColorNote | remapper.Bomb>(): Effect<T>
-{
+{   
     return enableValue("disableNoteLook")
+}
+
+export function setFlip(flip: remapper.Vec2): Effect<remapper.ColorNote>
+{
+    return setValueEffect("flip",flip)
+}
+
+export function disableFlip(): Effect<remapper.ColorNote>
+{
+    return parameterizeEffect(function(t: remapper.ColorNote)
+    {
+        return setValueEffect("flip",[t.x-2,0])
+    })
 }
 
 export function disableBadCutSaberType<T extends remapper.ColorNote>(): Effect<T>

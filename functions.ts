@@ -1,4 +1,4 @@
-import { NoteFilter, BombFilter, WallFilter, Filter, Effect, CreatorV3, CustomDataField, BSBasicObject, NumberGroupEffect, NoteEffect, SelectorV3, NoteSelectorV3, BombSelectorV3, WallSelectorV3 } from "./types.ts";
+import { NoteFilter, BombFilter, WallFilter, Filter, Effect, CreatorV3, CustomDataField, BSBasicObject, NumberGroupEffect, NoteEffect, SelectorV3, NoteSelectorV3, BombSelectorV3, WallSelectorV3, Identifier } from "./types.ts";
 import * as remapper from "https://deno.land/x/remapper@4.2.3/src/mod.ts";
 
 // These wrappers hardly do anything, so arguably they're unnecessary. Don't use them if you prefer to use ReMapper directly for this.
@@ -178,3 +178,20 @@ export function getCustomDataField<T extends BSBasicObject,V>(field: CustomDataF
         return getCustomDataFieldInner(t.unsafeCustomData,field)
     }
 }
+
+export function beatIdentifier<T extends BSBasicObject>(): Identifier<T>
+{
+    return function(t1: T, t2: T)
+    {
+        return t1.beat == t2.beat
+    }
+}
+
+// Presumes the arrays aren't empty and they have the same beat. In other words, uses the first element in each pattern.
+export function patternBeatIdentifier(): Identifier<remapper.ColorNote[]>
+{
+    return function (t1: remapper.ColorNote[], t2: remapper.ColorNote[])
+    {
+        return t1[0].beat == t2[0].beat
+    }
+} 
