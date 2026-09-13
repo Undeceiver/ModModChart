@@ -1,8 +1,9 @@
-import { Effect, NoteEffect, BombEffect, WallEffect, BSBasicObject, CustomDataField, TrackAnimationV3, TrackAnimationDefinition, BSObject } from "./types.ts";
+import { Effect, NoteEffect, BombEffect, WallEffect, BSBasicObject, CustomDataField, TrackAnimationV3, TrackAnimationDefinition, BSObject, ParameterExtractor, Parameterized, ParameterKind } from "./types.ts";
 import * as remapper from "https://deno.land/x/remapper@4.2.3/src/mod.ts";
 import * as util from "./util.ts"
 import { mapEffect } from "./functions.ts";
 import { getCustomDataField } from "./functions.ts";
+import * as ps from "./parameters.ts"
 
 export function noEffect<T>(): Effect<T>
 {
@@ -50,6 +51,14 @@ export function parameterizeEffectByCustomData<T extends BSBasicObject,V>(field:
     return function(t: T)
     {           
         effect(getCustomDataField<T,V>(field)(t))(t)
+    }
+}
+
+export function parameterizedEffect<P extends ParameterKind,T>(extractor: ParameterExtractor<T,P>, effect: Parameterized<P,Effect<T>>): Effect<T>
+{
+    return function(t: T)
+    {
+        effect(extractor(t))(t)
     }
 }
 
@@ -154,7 +163,7 @@ export function setHJD<T extends BSObject>(hjd: number): Effect<T>
     return parameterizeEffectByField("halfJumpDuration",
         function(halfJumpDur: number)
         {
-            return parameterizeEffectByField("noteJumpStartBeatOffset",
+            return parameterizeEffectByField("implicitNoteJumpStartBeatOffset",
                 function(offset: number | undefined)
                 {
                     offset = offset ?? 0

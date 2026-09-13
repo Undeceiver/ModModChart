@@ -275,3 +275,15 @@ export function patternsFromNotes(notes: remapper.ColorNote[]): remapper.ColorNo
 
     return result
 }
+
+export function beatsToZDistance(noteJumpMovementSpeed: number): (beats:number) => number
+{
+    return function(beats: number)
+    {
+        return noteJumpMovementSpeed*beats
+    }
+}
+
+export const playZ = 1
+export const saberLength = 1/0.6
+export const reasonableReach = 1.25/0.6

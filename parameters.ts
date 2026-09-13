@@ -84,3 +84,12 @@ export function multiPartial<PF1 extends string, P1 extends ParameterKind,R1,RP 
         return combiner(r1)(pp2)
     }
 }
+
+export function composeParameterized<P extends ParameterKind,T,S>(pt: Parameterized<P,T>, f: (t: T) => S): Parameterized<P,S>
+{
+    return function(params: P)
+    {
+        return f(pt(params))
+    }
+}
+

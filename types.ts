@@ -115,3 +115,5 @@ export type TimePointPatternDefinition = [number,number,number,number,number,num
 // Instead, we create a type alias ParameterKind that is purely indicative, and is actually equal to any.
 export type ParameterKind = object
 export type Parameterized<P extends ParameterKind,T> = ((params: P) => T)
+
+export type ParameterExtractor<T,P extends ParameterKind> = ((t: T) => P)

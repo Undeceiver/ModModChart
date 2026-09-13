@@ -370,18 +370,21 @@ export function invisible<T extends remapper.ColorNote | remapper.Bomb | remappe
 
 // Making notes appear without any spawn hint.
 // It appears at the JD on its HJD and then moves at the NJS. If you also want to modify that, modify it separately.
-export function noSpawn<T extends remapper.ColorNote | remapper.Bomb>(): Effect<T>
+export function noSpawn<T extends remapper.ColorNote>(): Effect<T>
 {
     const dissolve: remapper.ComplexPointsLinear = [[0,0],[0,0.01],[1,0.0101]]
     const dissolveArrow: remapper.ComplexPointsLinear = [[0,0],[0,0.01],[1,0.0101]]
 
-    const dissolveAnimation: Effect<T> = effects.animateDissolve(dissolve)
-    const dissolveArrowAnimation: Effect<T> = effects.animateDissolveArrow(dissolveArrow)
+    const dissolveAnimation: Effect<remapper.ColorNote> = effects.animateDissolve(dissolve)
+    const dissolveArrowAnimation: Effect<remapper.ColorNote> = effects.animateDissolveArrow(dissolveArrow)
 
-    const disableSpawnEffect: Effect<T> = effects.disableSpawnEffect()
-    const disableNoteLook: Effect<T> = effects.disableNoteLook()
+    const disableSpawnEffect: Effect<remapper.ColorNote> = effects.disableSpawnEffect()
+    const disableNoteLook: Effect<remapper.ColorNote> = effects.disableNoteLook()
+    const disableNoteGravity: Effect<remapper.ColorNote> = effects.disableNoteGravity()
 
-    return effects.combineEffects([dissolveAnimation,dissolveArrowAnimation,disableSpawnEffect,disableNoteLook])
+    const disableFlip: Effect<remapper.ColorNote> = effects.disableFlip()
+
+    return effects.combineEffects([dissolveAnimation,dissolveArrowAnimation,disableSpawnEffect,disableNoteLook,disableNoteGravity,disableFlip])
 }
 
 // Must have initialized position before.
@@ -603,9 +606,9 @@ export function small<T extends NoteOrBomb>(scale = 0.8): Effect<T>
 }
 
 // linker should link backwards, linking each element to the element that makes it spawn
-export function spawnInSync(linker: Linker<remapper.ColorNote>): Effect<remapper.ColorNote>
+export function spawnInSync<T extends BSBasicObject>(linker: Linker<T>): Effect<T>
 {
-    return function(t: remapper.ColorNote)
+    return function(t: T)
     {
         const spawners = linker(t)        
 
@@ -622,22 +625,10 @@ export function spawnInSync(linker: Linker<remapper.ColorNote>): Effect<remapper
         {
             return
         }
+        
+        const hjdeffect = effects.setHJD(beatDiff)
 
-        t.halfJumpDuration = beatDiff
-
-        const dissolve: remapper.ComplexPointsLinear = [[0,0],[0,0.01],[1,0.0101]]
-        const dissolveArrow: remapper.ComplexPointsLinear = [[0,0],[0,0.01],[1,0.0101]]
-
-        const dissolveAnimation: Effect<remapper.ColorNote> = effects.animateDissolve(dissolve)
-        const dissolveArrowAnimation: Effect<remapper.ColorNote> = effects.animateDissolveArrow(dissolveArrow)
-
-        const disableSpawnEffect: Effect<remapper.ColorNote> = effects.disableSpawnEffect()
-        const disableNoteLook: Effect<remapper.ColorNote> = effects.disableNoteLook()
-        const disableNoteGravity: Effect<remapper.ColorNote> = effects.disableNoteGravity()
-
-        const disableFlip: Effect<remapper.ColorNote> = effects.disableFlip()
-
-        effects.combineEffects([dissolveAnimation,dissolveArrowAnimation,disableSpawnEffect,disableNoteLook,disableFlip,disableNoteGravity])(t)               
+        hjdeffect(t)
     }
 }
 
